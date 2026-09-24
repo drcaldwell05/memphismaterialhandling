@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1320 230" role="img" aria-labelledby="title desc">
+  <title id="title">Memphis Material Handling Inc.</title>
+  <desc id="desc">The Memphis M Bridge flows into two forklift tines beside the company name.</desc>
+  <g fill="none" stroke="#17212b" stroke-linecap="square" stroke-linejoin="miter">
+    <path d="M20 166C55 61 168 40 260 117C352 40 465 61 500 166" stroke="#a9342f" stroke-width="10"/>
+    <path d="M36 166C74 91 171 77 260 139C349 77 446 91 484 166" stroke-width="7"/>
+    <g stroke-width="4">
+      <path d="M46 139V166M83 101V166M126 82V166M170 82V166M216 104V166M304 104V166M350 82V166M394 82V166M437 101V166M474 139V166"/>
+    </g>
+    <g stroke-width="5">
+      <path d="M26 149L56 119L83 101L106 88L126 82L148 78L170 82L193 91L216 104L238 121L260 139"/>
+      <path d="M260 139L282 121L304 104L327 91L350 82L372 78L394 82L414 88L437 101L464 119L494 149"/>
+    </g>
+    <g stroke-width="3.5">
+      <path d="M38 138L70 110L52 129L91 96L70 110L111 86L91 96L148 78L111 86L170 82L148 78L193 91L170 82L216 104L193 91L238 121L216 104L260 139L238 121"/>
+      <path d="M260 139L282 121L304 104L327 91L350 82L372 78L394 82L414 88L437 101L464 119L482 138"/>
+    </g>
+  </g>
+  <path d="M18 162H520C537 162 551 169 566 177L618 177" fill="none" stroke="#17212b" stroke-width="14" stroke-linecap="square"/>
+  <path d="M505 174C530 174 541 184 560 191H618" fill="none" stroke="#17212b" stroke-width="8" stroke-linecap="round"/>
+  <path d="M18 162V190" fill="none" stroke="#17212b" stroke-width="8"/>
+  <g fill="#17212b" font-family="Arial, Helvetica, sans-serif">
+    <text x="660" y="135" font-size="91" font-weight="800" letter-spacing="9">MEMPHIS</text>
+    <text x="665" y="188" fill="#7b858e" font-size="31" font-weight="500" letter-spacing="13">MATERIAL HANDLING</text>
+    <text x="1254" y="178" fill="#7b858e" font-size="17" font-weight="700" letter-spacing="2">INC.</text>
+  </g>
+</svg>
