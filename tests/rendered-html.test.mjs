@@ -468,7 +468,7 @@ test("keeps public navigation and contact links connected", async () => {
     assert.doesNotMatch(header, /mmh-logo(?:-reverse)?\.svg/);
     assert.equal((header.match(/<a[^>]*href="\/contact"[^>]*>Plan a project/g) ?? []).length, 2, `${pathname} should offer desktop and mobile project contact links`);
     assert.doesNotMatch(header, /href="\/sign-in"|aria-haspopup="dialog"/);
-    assert.doesNotMatch(html, /id="project-planner"|From an idea to a clear brief|Build a project brief|<form\b|class="project-intake-dialog"/);
+    assert.doesNotMatch(html, /id="project-planner"|From an idea to a clear brief|Build a project brief|<form\b|class="project-intake-dialog"|aria-haspopup="dialog"[^>]*>Plan a project/);
     for (const [, reference] of html.matchAll(/\baria-controls="([^"]+)"/g)) {
       assert.equal((html.match(new RegExp(`\\bid="${reference}"`, "g")) ?? []).length, 1, `${pathname}: ${reference} must resolve once`);
     }

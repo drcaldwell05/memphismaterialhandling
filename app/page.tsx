@@ -4,7 +4,6 @@ import Link from "next/link";
 import { SiteFooter, SiteHeader } from "./components/SiteShell";
 import { WarehouseExplorer } from "./components/WarehouseExplorer";
 import { ProjectPhoto } from "./components/ProjectPhoto";
-import { ProjectIntake } from "./components/ProjectIntake";
 
 const homeTitle = "Memphis Material Handling | Complete Warehouse Systems";
 const homeDescription =
@@ -100,7 +99,7 @@ export default function Home() {
             <p className="eyebrow">Memphis Material Handling</p>
             <h1 id="home-title">Your warehouse.<br /><span>Working better.</span></h1>
             <p className="hero-lead">Storage systems, equipment, and installation. Everything your space needs, thoughtfully brought together.</p>
-            <div className="button-row"><ProjectIntake className="hero-project" /><Link className="text-link" href="/services">Explore our services <span aria-hidden="true">↗</span></Link></div>
+            <div className="button-row"><Link className="button button-primary hero-project" href="/contact">Plan a project <span aria-hidden="true">↗</span></Link><Link className="text-link" href="/services">Explore our services <span aria-hidden="true">↗</span></Link></div>
             <p className="hero-location">Memphis, Tennessee <span aria-hidden="true">/</span> Established 1986</p>
           </div>
           <figure className="hero-photo">
