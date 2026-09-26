@@ -2,13 +2,14 @@
 
 ## Project intake
 
-The public desktop header and mobile menu send **Plan a project** visitors to
-`/contact`, where they can call the office, get directions, and see opening hours.
+The public desktop header, homepage, and mobile menu open the original three-step
+**Plan a project** form from the ChatGPT version. Visitors can choose their project
+needs, enter their details, and review their request without leaving the page.
 Staff sign-in is not linked in public navigation while access is unfinished.
-Contact has no embedded intake form.
+The separate Contact page retains its phone number, directions, and opening hours.
 
-`app/components/ProjectIntake.tsx` is retained as an unmounted preview for future
-online requests. Its answers live only in component state, and sending is
+`app/components/ProjectIntake.tsx` remains a preview for future online requests,
+matching the ChatGPT version. Its answers live only in component state, and sending is
 disabled. No recipient, email provider, submission endpoint, or storage is
 configured. Before enabling requests, confirm the receiving mailbox, implement
 server-side validation and abuse protection, and verify delivery to that mailbox.
