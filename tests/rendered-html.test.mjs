@@ -458,7 +458,7 @@ test("wires one shared motion controller and keeps reveal content fail-open", as
   }
 });
 
-test("keeps the final draft navigation and interactive controls connected", async () => {
+test("keeps public navigation and contact links connected", async () => {
   const pages = new Map(await Promise.all(OFFICIAL_ROUTES.map(async ({ pathname }) => [pathname, await getHtml(pathname)])));
   for (const [pathname, html] of pages) {
     const header = html.match(/<header\b[\s\S]*?<\/header>/)[0];
@@ -466,7 +466,8 @@ test("keeps the final draft navigation and interactive controls connected", asyn
     assert.match(header, /src="\/mmh-logo-forest-copper\.png"/);
     assert.match(header, /aria-label="Memphis Material Handling home"/);
     assert.doesNotMatch(header, /mmh-logo(?:-reverse)?\.svg/);
-    assert.equal((header.match(/<button[^>]*aria-haspopup="dialog"[^>]*>Plan a project/g) ?? []).length, 2, `${pathname} should offer desktop and mobile project triggers`);
+    assert.equal((header.match(/<a[^>]*href="\/contact"[^>]*>Plan a project/g) ?? []).length, 2, `${pathname} should offer desktop and mobile project contact links`);
+    assert.doesNotMatch(header, /href="\/sign-in"|aria-haspopup="dialog"/);
     assert.doesNotMatch(html, /id="project-planner"|From an idea to a clear brief|Build a project brief|<form\b|class="project-intake-dialog"/);
     for (const [, reference] of html.matchAll(/\baria-controls="([^"]+)"/g)) {
       assert.equal((html.match(new RegExp(`\\bid="${reference}"`, "g")) ?? []).length, 1, `${pathname}: ${reference} must resolve once`);

@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     icon: "/mmh-logo-forest-copper.png",
   },
   metadataBase: new URL(
-    "https://memphis-material-handling.dylanrcaldwell.chatgpt.site",
+    "https://www.memphismaterialhandling.com",
   ),
   openGraph: {
     title: "Memphis Material Handling | Complete Warehouse Systems",

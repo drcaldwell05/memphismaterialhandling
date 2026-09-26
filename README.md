@@ -2,12 +2,13 @@
 
 ## Project intake
 
-The desktop header and mobile menu open `app/components/ProjectIntake.tsx` only
-after a visitor selects **Plan a project**. Contact has no embedded intake form.
-The three steps collect plain-language project needs, optional project details,
-and a name plus at least one contact method, then display a review.
+The public desktop header and mobile menu send **Plan a project** visitors to
+`/contact`, where they can call the office, get directions, and see opening hours.
+Staff sign-in is not linked in public navigation while access is unfinished.
+Contact has no embedded intake form.
 
-The intake is a preview: answers live only in component state, and sending is
+`app/components/ProjectIntake.tsx` is retained as an unmounted preview for future
+online requests. Its answers live only in component state, and sending is
 disabled. No recipient, email provider, submission endpoint, or storage is
 configured. Before enabling requests, confirm the receiving mailbox, implement
 server-side validation and abuse protection, and verify delivery to that mailbox.
@@ -32,7 +33,21 @@ npm run dev
 npm run build
 ```
 
-This starter does not use `wrangler.jsonc`.
+## Public deployment
+
+The public website deploys from the `main` branch of
+`drcaldwell05/memphismaterialhandling` through Cloudflare Workers Builds.
+
+- Worker name: `memphismaterialhandling`
+- Build command: `npm test`
+- Deploy command: `npm run deploy`
+- Root directory: the repository root
+- Public domains: `memphismaterialhandling.com` and `www.memphismaterialhandling.com`
+
+`wrangler.jsonc` configures the Cloudflare Worker and static asset binding. The
+Cloudflare Vite plugin generates the deployable Worker configuration during the
+build. `.openai/hosting.json` remains a reference to the separate private draft;
+the public site is deployed by Cloudflare from GitHub.
 
 ## Included Shape
 

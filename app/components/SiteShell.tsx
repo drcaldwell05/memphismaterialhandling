@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SiteMotion } from "./SiteMotion";
-import { ProjectIntake } from "./ProjectIntake";
 
 export type ActivePage = "home" | "services" | "partners" | "about" | "contact";
 const navigation: Array<{ href: string; label: string; key: ActivePage }> = [
@@ -14,17 +13,17 @@ const navigation: Array<{ href: string; label: string; key: ActivePage }> = [
 function Brand() {
   return <><span className="brand-mark"><Image src="/mmh-logo-forest-copper.png" alt="" width={1536} height={1024} priority unoptimized /></span><span className="brand-name">Memphis<span>Material Handling</span></span></>;
 }
-function StaffSignIn({ mobile = false }: { mobile?: boolean }) {
-  return <Link className={mobile ? "staff-signin mobile-signin" : "staff-signin header-signin"} href="/sign-in" aria-label="Staff sign in">{mobile ? "Staff sign in" : "Sign in"}</Link>;
+function ProjectContact({ className }: { className: string }) {
+  return <Link className={`button button-primary ${className}`} href="/contact">Plan a project <span aria-hidden="true">↗</span></Link>;
 }
 export function SiteHeader({ active }: { active?: ActivePage }) {
   return <header className="site-header" id="top"><SiteMotion /><a className="skip-link" href="#main-content">Skip to content</a>
     <div className="wrap header-inner">
       <Link className="brand" href="/" aria-label="Memphis Material Handling home"><Brand /></Link>
       <nav className="desktop-nav" aria-label="Main navigation">{navigation.map(item => <Link key={item.key} href={item.href} aria-current={active === item.key ? "page" : undefined}>{item.label}</Link>)}</nav>
-      <div className="header-actions"><StaffSignIn /><ProjectIntake className="header-cta" />
+      <div className="header-actions"><ProjectContact className="header-cta" />
         <details className="mobile-menu"><summary aria-label="Navigation menu"><span className="menu-icon" aria-hidden="true"><i /><i /></span>Menu</summary>
-          <div className="mobile-menu-panel"><nav aria-label="Mobile navigation">{navigation.map(item => <Link key={item.key} href={item.href} aria-current={active === item.key ? "page" : undefined}>{item.label}</Link>)}</nav><StaffSignIn mobile /><ProjectIntake className="mobile-project-cta" /><a className="mobile-phone" href="tel:9019477225">901-947-7225</a></div>
+          <div className="mobile-menu-panel"><nav aria-label="Mobile navigation">{navigation.map(item => <Link key={item.key} href={item.href} aria-current={active === item.key ? "page" : undefined}>{item.label}</Link>)}</nav><ProjectContact className="mobile-project-cta" /><a className="mobile-phone" href="tel:9019477225">901-947-7225</a></div>
         </details>
       </div>
     </div>
