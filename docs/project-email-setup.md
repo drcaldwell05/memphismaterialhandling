@@ -61,13 +61,22 @@ configuration. No customer email contents are retained in their storage.
 2. Run `npm test`, `npm run typecheck`, `npm run lint`, and the Wrangler deploy dry run.
 3. Publish through GitHub main → existing Cloudflare Workers Builds, initially
    leaving sending disabled.
-4. Obtain permission for one clearly labeled synthetic test to the two recipients.
-   Once configuration is verified, enable `PROJECT_REQUESTS_ENABLED` through
-   GitHub, then immediately submit the test through the real form and Turnstile.
-   Confirm the From address, subject, HTML appearance, and customer Reply-To.
-5. Check Microsoft message trace and both destination inboxes. Graph 202 alone
-   does not prove delivery. Verify phone-only handling with local tests.
-6. Declare setup complete only after delivery is verified. If the test fails,
+4. Dylan approved one clearly labeled synthetic test **to Russell only**. Keep
+   `PROJECT_REQUESTS_ENABLED=false` during this test. The temporary
+   `PROJECT_REQUESTS_TEST_ID` and `PROJECT_REQUESTS_TEST_UNTIL` settings permit
+   only the fixed `RUSSELL_TEST` fixture, once, through the real form and Turnstile.
+   Open the site with `?projectTest=<configured test ID>`. The public form stays
+   disabled, visitor-provided recipients are ignored, and expired test links fail
+   closed. This identifier is not a credential; safety comes from the fixed test
+   content, recipient, bot verification, expiry, and duplicate prevention.
+5. Check Microsoft's trace and Russell's destination Inbox; Graph 202 alone does
+   not prove delivery. Confirm the From address, subject, HTML appearance, and
+   Reply-To. Do not send a test to Duane without separate authorization.
+6. After Russell's test is verified, clear both temporary test settings and enable
+   `PROJECT_REQUESTS_ENABLED` through GitHub for normal delivery to Russell **and**
+   Duane. The original production recipient list is unchanged. Phone-only handling
+   is verified locally; Duane's live delivery is not claimed from Russell's test.
+7. Declare setup complete only after delivery is verified. If the test fails,
    disable sending while investigating. Never replace an actual failure with a
    success screen or leave unverified submissions running unnoticed.
 
