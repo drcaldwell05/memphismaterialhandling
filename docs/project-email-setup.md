@@ -1,5 +1,21 @@
 # Project request email setup
 
+## Verified release — September 27, 2026
+
+Production sending is enabled. The approved test was delivered only to Russell
+at 17:05 UTC (12:05 p.m. Central), with receipt verified in his actual Inbox and
+Microsoft message trace. No test was sent to Duane. Normal requests address both
+Russell and Duane; Duane's individual receipt was not tested.
+
+Exchange Application RBAC permits only Application Mail.Send from projects.
+Russell, Duane, and operations were verified out of the app's sender scope. The
+temporary Exchange Administrator role used to complete setup was removed; the
+original Global Administrator role remains. Both temporary test settings are
+empty, and the retired test link returns `enabled: false`.
+
+The Microsoft client credential expires March 26, 2027. Replace it securely in
+the Worker's encrypted runtime secret before then; never commit its value.
+
 ## Intended delivery
 
 - Sender: Memphis Material Handling `<projects@memphismaterialhandling.com>`

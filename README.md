@@ -14,9 +14,12 @@ Duane's regular Microsoft inboxes. Reply-To is the customer when they provide an
 email address; phone-only requests remain supported. The sender and recipients
 are fixed on the server. The shared sender mailbox is not mapped into their apps.
 
-Sending is disabled until setup and live delivery verification are complete.
-`PROJECT_REQUESTS_ENABLED` and all required bindings/credentials must be present
-before the form becomes available. See [the setup checklist](docs/project-email-setup.md).
+Production sending was enabled on September 27, 2026, after the approved test
+arrived in Russell's Inbox and Microsoft message trace reported Delivered. The
+test went only to Russell; normal requests address both Russell and Duane.
+`PROJECT_REQUESTS_ENABLED` must be `true` and all required bindings/credentials
+must be present. The temporary test settings are cleared. See
+[the setup checklist](docs/project-email-setup.md).
 
 Requests use server validation, a 24 KB body cap, same-origin checks, a honeypot,
 five attempts per IP per minute, and server-verified Turnstile tokens bound to the
