@@ -38,3 +38,20 @@ test('Microsoft rejection is never reported as accepted',async t=>{
   t.mock.method(globalThis,'fetch',async url=> url.includes('/token') ? Response.json({access_token:'synthetic-token'}) : new Response(null,{status:403}));
   await assert.rejects(new MailBridgeAlerts({},env).notify({pending:2,code:'failure'}),/delivery_unconfirmed/);
 });
+
+test('the separately gated setup email has a fixed AOL recipient and synthetic attachment', async t=>{
+  const calls=[];
+  t.mock.method(globalThis,'fetch',async (url,options)=>{
+    calls.push({url,options});
+    return url.includes('/token') ? Response.json({access_token:'synthetic-token'}) : new Response(null,{status:202});
+  });
+  await assert.rejects(new MailBridgeAlerts({},env).sendAcceptanceTest(),/test_disabled/);
+  assert.equal(calls.length,0);
+  await new MailBridgeAlerts({},{...env,AOL_COPY_TEST_ENABLED:'true'}).sendAcceptanceTest();
+  const {message}=JSON.parse(calls[1].options.body);
+  assert.deepEqual(message.toRecipients,[{emailAddress:{address:'memphismaterial@aol.com'}}]);
+  assert.equal(message.subject,'TEST — AOL copy check');
+  assert.equal(message.attachments[0].name,'aol-copy-check.txt');
+  assert.match(Buffer.from(message.attachments[0].contentBytes,'base64').toString(),/No customer information/);
+  assert.equal(typeof new MailBridgeAlerts({},env).deliver,'undefined');
+});
