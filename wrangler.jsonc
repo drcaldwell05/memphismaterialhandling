@@ -4,6 +4,17 @@
   "main": "./worker/index.ts",
   "compatibility_date": "2026-09-26",
   "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "PROJECT_REQUESTS_ENABLED": "false",
+    "MICROSOFT_TENANT_ID": "425c0726-da86-4408-a0c3-acf3cfbc6978",
+    "MICROSOFT_CLIENT_ID": "7b354021-f9da-4aa7-9c09-a113ad1194f2",
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAFFYehKkUgUWD4Of"
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "PROJECT_SUBMISSIONS", "class_name": "ProjectSubmission" }]
+  },
+  "migrations": [{ "tag": "project-submission-v1", "new_sqlite_classes": ["ProjectSubmission"] }],
+  "ratelimits": [{ "name": "PROJECT_RATE_LIMITER", "namespace_id": "2026092701", "simple": { "limit": 5, "period": 60 } }],
   "assets": {
     "binding": "ASSETS",
     "directory": "./public"

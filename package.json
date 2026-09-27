@@ -10,7 +10,9 @@
     "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
     "deploy": "wrangler deploy",
-    "test": "npm run build && node --test tests/rendered-html.test.mjs",
+    "test": "node --test tests/project-requests.test.mjs && npm run build && node --test tests/rendered-html.test.mjs",
+    "typecheck": "tsc --noEmit --incremental false",
+    "types": "wrangler types --strict-vars false",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate"
   },

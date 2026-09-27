@@ -178,7 +178,7 @@ export default function PartnersPage() {
                 </li>
               ))}
               <li className="experience-project-link">
-                <Link href="/contact"><span>Planning your next project?</span><strong>Let's talk through it.</strong><span className="experience-project-arrow" aria-hidden="true">↗</span></Link>
+                <Link href="/contact"><span>Planning your next project?</span><strong>Let&apos;s talk through it.</strong><span className="experience-project-arrow" aria-hidden="true">↗</span></Link>
               </li>
             </ul>
             <p className="partner-experience-note">Company and brand names identify selected past project experience. Their inclusion does not imply endorsement, partnership, or an ongoing business relationship.</p>

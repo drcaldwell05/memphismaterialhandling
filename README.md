@@ -8,13 +8,27 @@ needs, enter their details, and review their request without leaving the page.
 Staff sign-in is not linked in public navigation while access is unfinished.
 The separate Contact page retains its phone number, directions, and opening hours.
 
-`app/components/ProjectIntake.tsx` remains a preview for future online requests,
-matching the ChatGPT version. Its answers live only in component state, and sending is
-disabled. No recipient, email provider, submission endpoint, or storage is
-configured. Before enabling requests, confirm the receiving mailbox, implement
-server-side validation and abuse protection, and verify delivery to that mailbox.
-Only then replace the preview notices and enable sending, with honest error and
-success states.
+The form posts to `/api/project-requests`. Microsoft Graph sends the HTML
+notification from `projects@memphismaterialhandling.com` directly to Russell and
+Duane's regular Microsoft inboxes. Reply-To is the customer when they provide an
+email address; phone-only requests remain supported. The sender and recipients
+are fixed on the server. The shared sender mailbox is not mapped into their apps.
+
+Sending is disabled until setup and live delivery verification are complete.
+`PROJECT_REQUESTS_ENABLED` and all required bindings/credentials must be present
+before the form becomes available. See [the setup checklist](docs/project-email-setup.md).
+
+Requests use server validation, a 24 KB body cap, same-origin checks, a honeypot,
+five attempts per IP per minute, and server-verified Turnstile tokens bound to the
+site hostname and form action. A SQLite Durable Object keeps only the submission
+fingerprint, reference, timestamp, and status for seven days to prevent duplicate
+sends. Customer contact details and message text are not saved in that store or
+logged. Microsoft keeps the sent email in the shared sender's Sent Items.
+
+Microsoft's HTTP 202 means accepted for sending, not confirmed inbox delivery.
+The form says submitted only after that acceptance. An uncertain send is never
+automatically resent, and a failed send keeps the customer's answers visible.
+The email layout is editable in `worker/project-email.ts`.
 
 ## Application
 
@@ -121,7 +135,10 @@ actions tied to the current ChatGPT user. Leave public content anonymous.
 
 - `npm run dev`: start local development
 - `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
+- `npm test`: test request validation/delivery behavior, build, and verify rendered pages
+- `npm run typecheck`: check TypeScript
+- `npm run lint`: check source quality
+- `npm run types`: regenerate Cloudflare binding and runtime types
 - `npm run db:generate`: generate Drizzle migrations after schema changes
 
 ## Learn More
