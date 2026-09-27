@@ -10,8 +10,8 @@ Russell and Duane; Duane's individual receipt was not tested.
 Exchange Application RBAC permits only Application Mail.Send from projects.
 Russell, Duane, and operations were verified out of the app's sender scope. The
 temporary Exchange Administrator role used to complete setup was removed; the
-original Global Administrator role remains. Both temporary test settings are
-empty, and the retired test link returns `enabled: false`.
+original Global Administrator role remains. Temporary test controls, settings,
+and fixture data have been removed. Retired test API links still fail closed.
 
 The Microsoft client credential expires March 26, 2027. Replace it securely in
 the Worker's encrypted runtime secret before then; never commit its value.
@@ -77,22 +77,17 @@ configuration. No customer email contents are retained in their storage.
 2. Run `npm test`, `npm run typecheck`, `npm run lint`, and the Wrangler deploy dry run.
 3. Publish through GitHub main → existing Cloudflare Workers Builds, initially
    leaving sending disabled.
-4. Dylan approved one clearly labeled synthetic test **to Russell only**. Keep
-   `PROJECT_REQUESTS_ENABLED=false` during this test. The temporary
-   `PROJECT_REQUESTS_TEST_ID` and `PROJECT_REQUESTS_TEST_UNTIL` settings permit
-   only the fixed `RUSSELL_TEST` fixture, once, through the real form and Turnstile.
-   Open the site with `?projectTest=<configured test ID>`. The public form stays
-   disabled, visitor-provided recipients are ignored, and expired test links fail
-   closed. This identifier is not a credential; safety comes from the fixed test
-   content, recipient, bot verification, expiry, and duplicate prevention.
-5. Check Microsoft's trace and Russell's destination Inbox; Graph 202 alone does
-   not prove delivery. Confirm the From address, subject, HTML appearance, and
-   Reply-To. Do not send a test to Duane without separate authorization.
-6. After Russell's test is verified, clear both temporary test settings and enable
-   `PROJECT_REQUESTS_ENABLED` through GitHub for normal delivery to Russell **and**
-   Duane. The original production recipient list is unchanged. Phone-only handling
-   is verified locally; Duane's live delivery is not claimed from Russell's test.
-7. Declare setup complete only after delivery is verified. If the test fails,
+4. Obtain specific approval for any new live test's recipients and content. The
+   current form always addresses both Russell and Duane. Its original acceptance
+   test went only to Russell through a temporary path that has since been removed;
+   do not reuse old test links or mistake a local mock for a delivered email.
+5. Check Microsoft message trace and the approved destination Inbox; Graph 202
+   alone does not prove delivery. Confirm the sender, subject, HTML appearance,
+   and customer Reply-To. Phone-only handling is verified in local tests.
+6. Enable `PROJECT_REQUESTS_ENABLED` through GitHub after delivery is verified.
+   Normal requests address Russell **and** Duane. Duane's live receipt was not
+   claimed from the original Russell-only acceptance test.
+7. Declare setup complete only after delivery is verified. If a live test fails,
    disable sending while investigating. Never replace an actual failure with a
    success screen or leave unverified submissions running unnoticed.
 

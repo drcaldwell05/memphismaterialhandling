@@ -1,6 +1,5 @@
 import { validateProjectRequest, type ProjectRequest } from "../lib/project-request";
 import { PROJECT_SENDER, projectEmail } from "./project-email";
-import { isRussellTest } from "./project-test";
 
 const HOSTS = new Set(["memphismaterialhandling.com", "www.memphismaterialhandling.com"]);
 const MAX_BYTES = 24_000;
@@ -20,12 +19,6 @@ function configured(env: MailEnv) {
 
 export function ready(env: MailEnv) {
   return env.PROJECT_REQUESTS_ENABLED === "true" && configured(env);
-}
-
-function testReady(env: MailEnv, id: string | null) {
-  return env.PROJECT_REQUESTS_ENABLED === "false" && configured(env) &&
-    UUID.test(env.PROJECT_REQUESTS_TEST_ID || "") && id === env.PROJECT_REQUESTS_TEST_ID &&
-    Date.now() < Date.parse(env.PROJECT_REQUESTS_TEST_UNTIL || "");
 }
 
 async function readBody(request: Request) {
@@ -51,12 +44,10 @@ async function readBody(request: Request) {
 
 export async function handleProjectRequest(request: Request, env: MailEnv) {
   const url = new URL(request.url);
-  const testRequested = url.searchParams.has("test");
-  const testId = url.searchParams.get("test");
-  const testOnly = testRequested && testReady(env, testId);
-  const enabled = testRequested ? testOnly : ready(env);
+  // Retired acceptance-test links must never submit to the normal recipient list.
+  const enabled = !url.searchParams.has("test") && ready(env);
   if (url.pathname === "/api/project-requests/config" && request.method === "GET") {
-    return json({ enabled, siteKey: enabled ? env.TURNSTILE_SITE_KEY : undefined, testRequestId: testOnly ? testId : undefined });
+    return json({ enabled, siteKey: enabled ? env.TURNSTILE_SITE_KEY : undefined });
   }
   if (request.method !== "POST") return json({ error: "Method not allowed." }, 405);
   if (!enabled) return json({ error: "Online requests are temporarily unavailable. Please call 901-947-7225." }, 503);
@@ -73,11 +64,10 @@ export async function handleProjectRequest(request: Request, env: MailEnv) {
   if (typeof input.requestId !== "string" || !UUID.test(input.requestId) || typeof input.turnstileToken !== "string" || !input.turnstileToken || input.turnstileToken.length > 2048) return json({ error: "Please complete the verification and try again.", verification: true }, 400);
   const { data, errors } = validateProjectRequest(input);
   if (!data) return json({ error: Object.values(errors)[0] || "Please check your project details.", errors }, 400);
-  if (testOnly && (input.requestId !== testId || !isRussellTest(data))) return json({ error: "This test accepts only the prepared Russell-only test details." }, 400);
   const id = env.PROJECT_SUBMISSIONS.idFromName(input.requestId);
   // The private Durable Object receives only validated fields and cannot be addressed publicly.
   return env.PROJECT_SUBMISSIONS.get(id).fetch(new Request("https://project-submission/", {
-    method: "POST", body: JSON.stringify({ data, requestId: input.requestId, token: input.turnstileToken, hostname: url.hostname, ip, delivery: testOnly ? "russell-test" : "team" }),
+    method: "POST", body: JSON.stringify({ data, requestId: input.requestId, token: input.turnstileToken, hostname: url.hostname, ip }),
   }));
 }
 
@@ -85,8 +75,7 @@ export class ProjectSubmission {
   constructor(private ctx: DurableObjectState, private env: MailEnv) {}
 
   async fetch(request: Request): Promise<Response> {
-    const { data, requestId, token, hostname, ip, delivery = "team" } = await request.json() as { data: ProjectRequest; requestId: string; token: string; hostname: string; ip: string; delivery?: "team" | "russell-test" };
-    if (delivery === "russell-test" && (!testReady(this.env, requestId) || !isRussellTest(data))) return json({ error: "This test is not available." }, 503);
+    const { data, requestId, token, hostname, ip } = await request.json() as { data: ProjectRequest; requestId: string; token: string; hostname: string; ip: string };
     const fingerprint = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(data))))).map(byte => byte.toString(16).padStart(2, "0")).join("");
     const old = await this.ctx.storage.get<Receipt>("receipt");
     if (old) return this.receiptResponse(old, fingerprint, requestId);
@@ -128,7 +117,7 @@ export class ProjectSubmission {
     try {
       result = await fetch(`https://graph.microsoft.com/v1.0/users/${PROJECT_SENDER}/sendMail`, {
         method: "POST", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify(projectEmail(data, requestId, delivery)), signal: AbortSignal.timeout(12_000),
+        body: JSON.stringify(projectEmail(data, requestId)), signal: AbortSignal.timeout(12_000),
       });
     } catch {
       await this.ctx.storage.put("receipt", { fingerprint, state: "uncertain", started: Date.now() } satisfies Receipt);

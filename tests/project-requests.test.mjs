@@ -9,7 +9,6 @@ async function moduleAt(entry) {
 const { handleProjectRequest, ProjectSubmission } = await moduleAt("worker/project-requests.ts");
 const { projectEmail, PROJECT_RECIPIENTS } = await moduleAt("worker/project-email.ts");
 const { validateProjectRequest } = await moduleAt("lib/project-request.ts");
-const { RUSSELL_TEST } = await moduleAt("worker/project-test.ts");
 const sample = { needs: ["storage"], name: "Sample Customer", company: "Example Warehouse", email: "customer@example.com", phone: "", description: "Need more room for pallets.", location: "Memphis, TN", timing: "Within 1–3 months" };
 const requestId = "069b79a0-a0f9-4c9a-a6f3-1f592a7d215b";
 const env = { PROJECT_REQUESTS_ENABLED: "true", MICROSOFT_TENANT_ID: "425c0726-da86-4408-a0c3-acf3cfbc6978", MICROSOFT_CLIENT_ID: "069b79a0-a0f9-4c9a-a6f3-1f592a7d215c", MS_GRAPH_CLIENT_SECRET: "synthetic-test-credential", TURNSTILE_SITE_KEY: "synthetic-sitekey", TURNSTILE_SECRET_KEY: "synthetic-test-secret", PROJECT_RATE_LIMITER: { limit: async () => ({ success: true }) }, PROJECT_SUBMISSIONS: { idFromName: name => name, get: () => ({ fetch: async () => Response.json({ accepted: true }) }) } };
@@ -110,39 +109,15 @@ test("Microsoft rejection never produces a success message", async t => {
   assert.equal((await response.json()).accepted, undefined);
 });
 
-test("one approved test reaches only Russell while ordinary public requests stay disabled", async t => {
-  const deliveries = [];
-  t.mock.method(globalThis, "fetch", async (url, options) => {
-    if (url.includes("siteverify")) return Response.json({ success: true, hostname: "memphismaterialhandling.com", action: "project_request" });
-    if (url.includes("/token")) return Response.json({ access_token: "synthetic-access-token" });
-    deliveries.push(JSON.parse(options.body));
-    return new Response(null, { status: 202 });
-  });
-  const testEnv = { ...env, PROJECT_REQUESTS_ENABLED: "false", PROJECT_REQUESTS_TEST_ID: requestId, PROJECT_REQUESTS_TEST_UNTIL: new Date(Date.now() + 60_000).toISOString() };
-  const submission = new ProjectSubmission({ storage: storage() }, testEnv);
-  testEnv.PROJECT_SUBMISSIONS = { idFromName: name => name, get: () => submission };
+test("retired test links fail closed while normal requests always use both approved recipients", async () => {
   const configUrl = "https://memphismaterialhandling.com/api/project-requests/config";
-  assert.deepEqual(await (await handleProjectRequest(new Request(configUrl), testEnv)).json(), { enabled: false });
-  assert.equal((await handleProjectRequest(post(), testEnv)).status, 503);
-  assert.equal((await (await handleProjectRequest(new Request(`${configUrl}?test=${requestId}`), testEnv)).json()).testRequestId, requestId);
-  const testPost = (changes = {}, id = requestId) => {
-    const original = post(input({ ...RUSSELL_TEST, ...changes }));
-    return new Request(`${original.url}?test=${id}`, original);
-  };
-  assert.equal((await handleProjectRequest(testPost({ description: "Unapproved content" }), testEnv)).status, 400);
-  assert.equal((await handleProjectRequest(testPost({ requestId: crypto.randomUUID() }), testEnv)).status, 400);
-  assert.equal((await handleProjectRequest(testPost({}, crypto.randomUUID()), testEnv)).status, 503);
-  assert.equal((await handleProjectRequest(testPost(), { ...testEnv, PROJECT_REQUESTS_TEST_UNTIL: "2020-01-01T00:00:00Z" })).status, 503);
-  assert.equal((await handleProjectRequest(testPost(), { ...testEnv, PROJECT_REQUESTS_ENABLED: "true" })).status, 503);
-  assert.equal((await handleProjectRequest(testPost(), { ...testEnv, MS_GRAPH_CLIENT_SECRET: "" })).status, 503);
-  const response = await handleProjectRequest(testPost({ to: "duane@memphismaterialhandling.com", delivery: "team" }), testEnv);
-  assert.equal((await response.json()).accepted, true);
-  assert.equal((await (await handleProjectRequest(testPost(), testEnv)).json()).accepted, true);
-  assert.equal(deliveries.length, 1);
-  assert.deepEqual(deliveries[0].message.toRecipients, [{ emailAddress: { address: "russell@memphismaterialhandling.com" } }]);
-  assert.equal(deliveries[0].message.ccRecipients, undefined);
-  assert.equal(deliveries[0].message.bccRecipients, undefined);
-  assert.match(deliveries[0].message.body.content, /sent only to Russell/);
-  assert.doesNotMatch(deliveries[0].message.body.content, /sent to both Russell and Duane/);
-  assert.deepEqual(projectEmail(sample, crypto.randomUUID()).message.toRecipients.map(item => item.emailAddress.address), ["russell@memphismaterialhandling.com", "duane@memphismaterialhandling.com"]);
+  assert.deepEqual(await (await handleProjectRequest(new Request(configUrl), env)).json(), { enabled: true, siteKey: env.TURNSTILE_SITE_KEY });
+  assert.deepEqual(await (await handleProjectRequest(new Request(configUrl + "?test=" + requestId), env)).json(), { enabled: false });
+  const original = post();
+  assert.equal((await handleProjectRequest(new Request(original.url + "?test=" + requestId, original), env)).status, 503);
+  const message = projectEmail({ ...sample, delivery: "russell-test", to: "attacker@example.com" }, requestId).message;
+  assert.deepEqual(message.toRecipients.map(item => item.emailAddress.address), ["russell@memphismaterialhandling.com", "duane@memphismaterialhandling.com"]);
+  assert.equal(message.ccRecipients, undefined);
+  assert.equal(message.bccRecipients, undefined);
+  assert.doesNotMatch(message.body.content, /Dylan|website setup test|no action needed/i);
 });

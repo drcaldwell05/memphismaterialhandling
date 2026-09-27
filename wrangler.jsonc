@@ -6,8 +6,6 @@
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
     "PROJECT_REQUESTS_ENABLED": "true",
-    "PROJECT_REQUESTS_TEST_ID": "",
-    "PROJECT_REQUESTS_TEST_UNTIL": "",
     "MICROSOFT_TENANT_ID": "425c0726-da86-4408-a0c3-acf3cfbc6978",
     "MICROSOFT_CLIENT_ID": "7b354021-f9da-4aa7-9c09-a113ad1194f2",
     "TURNSTILE_SITE_KEY": "0x4AAAAAAFFYehKkUgUWD4Of"

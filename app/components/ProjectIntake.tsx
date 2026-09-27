@@ -22,7 +22,7 @@ export function ProjectIntake({ className }: { className: string }) {
   const [needs, setNeeds] = useState<Need[]>([]);
   const [details, setDetails] = useState<Details>(initialDetails);
   const [errors, setErrors] = useState<Errors>({});
-  const [config, setConfig] = useState<{ enabled: boolean; siteKey?: string; testRequestId?: string } | null>(null);
+  const [config, setConfig] = useState<{ enabled: boolean; siteKey?: string } | null>(null);
   const [token, setToken] = useState("");
   const [website, setWebsite] = useState("");
   const [verificationAttempt, setVerificationAttempt] = useState(0);
@@ -37,11 +37,9 @@ export function ProjectIntake({ className }: { className: string }) {
   useEffect(() => {
     if (!open) return;
     const controller = new AbortController();
-    const testId = new URLSearchParams(window.location.search).get("projectTest");
-    const query = testId ? `?test=${encodeURIComponent(testId)}` : "";
-    fetch(`/api/project-requests/config${query}`, { signal: controller.signal, cache: "no-store" })
+    fetch("/api/project-requests/config", { signal: controller.signal, cache: "no-store" })
       .then(response => response.ok ? response.json() : { enabled: false })
-      .then(value => { const result = value as { enabled?: boolean; siteKey?: string; testRequestId?: string }; setConfig({ enabled: result.enabled === true, siteKey: result.siteKey, testRequestId: result.testRequestId }); })
+      .then(value => { const result = value as { enabled?: boolean; siteKey?: string }; setConfig({ enabled: result.enabled === true, siteKey: result.siteKey }); })
       .catch(() => { if (!controller.signal.aborted) setConfig({ enabled: false }); });
     return () => controller.abort();
   }, [open]);
@@ -99,12 +97,11 @@ export function ProjectIntake({ className }: { className: string }) {
   async function sendRequest() {
     if (sendLock.current || sending || finalError || !config?.enabled || (!token && !submission)) return;
     sendLock.current = true;
-    const payload = submission ?? { ...details, needs, website, turnstileToken: token, requestId: config.testRequestId || crypto.randomUUID() };
+    const payload = submission ?? { ...details, needs, website, turnstileToken: token, requestId: crypto.randomUUID() };
     setSubmission(payload);
     setSending(true); setSendError("");
     try {
-      const query = config.testRequestId ? `?test=${encodeURIComponent(config.testRequestId)}` : "";
-      const response = await fetch(`/api/project-requests${query}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), signal: AbortSignal.timeout(45_000) });
+      const response = await fetch("/api/project-requests", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), signal: AbortSignal.timeout(45_000) });
       const result = await response.json() as { accepted?: boolean; error?: string; reference?: string; final?: boolean; verification?: boolean };
       if (response.ok && result.accepted === true) { setAccepted(true); setReference(result.reference || ""); return; }
       setSendError(typeof result.error === "string" ? result.error : "We couldn’t confirm your submission. Please try checking again.");
@@ -158,7 +155,6 @@ export function ProjectIntake({ className }: { className: string }) {
             <div className="intake-body" ref={body}>
               {accepted ? <section className="intake-success" aria-labelledby={`${id}-step-heading`} role="status"><span className="intake-success-mark" aria-hidden="true">✓</span><h3 ref={heading} tabIndex={-1} id={`${id}-step-heading`}>Your request has been submitted.</h3><p className="intake-intro">Thank you for telling us about your project. Our team will review your details and contact you using the information you provided.</p><p className="intake-help">Need to talk sooner? Call <a href="tel:9019477225">901-947-7225</a>.</p></section> : <>
               {config && !config.enabled && <p className="intake-preview-note"><strong>Online requests are temporarily unavailable.</strong> Please call <a href="tel:9019477225">901-947-7225</a> to discuss your project.</p>}
-              {config?.testRequestId && <p className="intake-preview-note"><strong>Website setup test.</strong> This test email goes only to Russell.</p>}
               <div className="intake-honeypot" aria-hidden="true"><label htmlFor={`${id}-website`}>Leave this field empty<input id={`${id}-website`} name="website" tabIndex={-1} autoComplete="off" value={website} onChange={event => setWebsite(event.target.value)} /></label></div>
               {step === 0 && <section aria-labelledby={`${id}-step-heading`}>
                 <h3 ref={heading} tabIndex={-1} id={`${id}-step-heading`}>What would you like help with?</h3>
@@ -239,7 +235,7 @@ export function ProjectIntake({ className }: { className: string }) {
             <div className="intake-bottom">
               {accepted ? <><span /><button className="button button-primary" type="button" onClick={closeForm}>Done <span aria-hidden="true">✓</span></button></> : <>
               {step > 0 ? <button className="intake-back" type="button" disabled={sending || Boolean(submission)} onClick={() => goTo(step - 1)}>← Back</button> : <span className="intake-step-count">Step 1 of 3</span>}
-              {step < 2 ? <button className="button button-primary" type="submit">{step === 0 ? "Continue" : "Review request"} <span aria-hidden="true">→</span></button> : <button className="button button-primary" type="submit" disabled={!config?.enabled || sending || finalError || (!token && !submission)} aria-describedby={`${id}-delivery-note`}>{sending ? "Submitting…" : submission ? "Check submission" : config?.testRequestId ? "Send test to Russell" : "Send project request"} <span aria-hidden="true">↗</span></button>}
+              {step < 2 ? <button className="button button-primary" type="submit">{step === 0 ? "Continue" : "Review request"} <span aria-hidden="true">→</span></button> : <button className="button button-primary" type="submit" disabled={!config?.enabled || sending || finalError || (!token && !submission)} aria-describedby={`${id}-delivery-note`}>{sending ? "Submitting…" : submission ? "Check submission" : "Send project request"} <span aria-hidden="true">↗</span></button>}
               </>}
             </div>
           </form>

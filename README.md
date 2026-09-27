@@ -18,7 +18,7 @@ Production sending was enabled on September 27, 2026, after the approved test
 arrived in Russell's Inbox and Microsoft message trace reported Delivered. The
 test went only to Russell; normal requests address both Russell and Duane.
 `PROJECT_REQUESTS_ENABLED` must be `true` and all required bindings/credentials
-must be present. The temporary test settings are cleared. See
+must be present. Temporary test controls and fixture data have been removed. See
 [the setup checklist](docs/project-email-setup.md).
 
 Requests use server validation, a 24 KB body cap, same-origin checks, a honeypot,
