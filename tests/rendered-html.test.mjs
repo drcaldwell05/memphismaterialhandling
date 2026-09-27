@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
+import { register } from "node:module";
+
+// The Node rendering harness never calls private Cloudflare RPC entrypoints.
+register("./cloudflare-loader.mjs", import.meta.url);
 
 const OFFICIAL_ROUTES = [
   { pathname: "/", source: "../app/page.tsx" },

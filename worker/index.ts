@@ -3,6 +3,7 @@ import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } fr
 import handler from "vinext/server/app-router-entry";
 import { handleProjectRequest, json, type MailEnv } from "./project-requests";
 export { ProjectSubmission } from "./project-requests";
+export { MailBridgeAlerts } from "./mail-bridge-alerts";
 
 // Image security config. SVG sources with .svg extension auto-skip the
 // optimization endpoint on the client side (served directly, no proxy).
