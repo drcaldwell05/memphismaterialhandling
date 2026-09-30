@@ -8,16 +8,42 @@ interface AlertEnv {
   MS_GRAPH_CLIENT_SECRET?: string;
   AOL_COPY_ALERTS_ENABLED?: string;
   AOL_COPY_TEST_ENABLED?: string;
+  AOL_MONITOR_TEST_ENABLED?: string;
+  AOL_COPY_ALERT_RECIPIENT?: string;
 }
 
 export class MailBridgeAlerts extends WorkerEntrypoint<AlertEnv> {
+  async sendMonitorTest(): Promise<void> {
+    if (this.env.AOL_MONITOR_TEST_ENABLED !== 'true') throw new Error('monitor_test_disabled');
+    await this.#deliver({
+      subject: 'TEST — Dylan’s email alert setup for Dad',
+      body: { contentType: 'Text', content: 'I’m testing the alerts I set up for Dad’s AOL-to-Microsoft email connection.\n\nThis message is just a test to check that notices reach my email. No action is needed.\n\n— Dylan' },
+      toRecipients: [{ emailAddress: { address: this.#recipient() } }],
+      internetMessageHeaders: [{ name: 'X-MMH-AOL-Monitor-Test', value: '2026-09-30-dylan-only' }],
+    });
+  }
+
+  async notifyMaintenance(input: { reason: string; expiry?: string }): Promise<void> {
+    if (this.env.AOL_COPY_ALERTS_ENABLED !== 'true') throw new Error('alerts_disabled');
+    const permitted = ['copy_checks_missing', 'copy_status_unavailable', 'copy_paused', 'credential_renewal_due'];
+    if (!permitted.includes(input.reason)) throw new Error('invalid_notice');
+    let subject = 'Automatic AOL email checks need attention';
+    let content = 'The separate cloud monitor has detected that automatic AOL email copying is paused, unavailable, or has not completed a successful check recently. New AOL messages may be delayed.\n\nPlease check memphismaterial@aol.com directly until the connection is confirmed healthy. The copier does not delete or move AOL originals.\n\nSupport reference: ' + input.reason;
+    if (input.reason === 'credential_renewal_due') {
+      if (input.expiry !== '2027-03-26T00:00:00.000Z') throw new Error('invalid_expiration');
+      subject = 'Renew the automatic AOL email connection before March 26, 2027';
+      content = 'The Microsoft credentials used by automatic AOL email copying and its failure-notice sender expire March 26, 2027. Arrange renewal before that date so copying and failure notices can continue.\n\nThis is an advance maintenance notice; it does not by itself mean mail copying has stopped. No daily checks or computer left running are needed.\n\nMemphis Material Handling';
+    }
+    await this.#deliver({ subject, body: { contentType: 'Text', content }, toRecipients: [{ emailAddress: { address: this.#recipient() } }] });
+  }
+
   async notify(input: { pending: number; code: string }): Promise<void> {
     if (this.env.AOL_COPY_ALERTS_ENABLED !== 'true') throw new Error('alerts_disabled');
     if (!Number.isSafeInteger(input.pending) || input.pending < 0 || input.pending > 100_000 || !/^[a-z_]{1,60}$/.test(input.code)) throw new Error('invalid_alert');
     await this.#deliver({
       subject: 'AOL email copies need attention',
-      body: { contentType: 'Text', content: `Automatic copies from the AOL Inbox to your Microsoft Inbox need attention. New AOL messages may be delayed.\n\nPlease check memphismaterial@aol.com directly until the connection is fixed. Your originals remain in AOL.\n\nMessages currently waiting: ${input.pending}\nSupport reference: ${input.code}\n\nMemphis Material Handling` },
-      toRecipients: [{ emailAddress: { address: 'russell@memphismaterialhandling.com' } }],
+      body: { contentType: 'Text', content: `Automatic copies from Dad's AOL Inbox to his Microsoft Inbox need attention. New AOL messages may be delayed.\n\nPlease check the AOL Inbox directly until the connection is fixed. The copier leaves the AOL originals alone.\n\nMessages currently waiting: ${input.pending}\nSupport reference: ${input.code}\n\nMemphis Material Handling` },
+      toRecipients: [{ emailAddress: { address: this.#recipient() } }],
     });
   }
 
@@ -33,6 +59,13 @@ export class MailBridgeAlerts extends WorkerEntrypoint<AlertEnv> {
       internetMessageHeaders: [{ name: 'X-MMH-AOL-Acceptance-Ref', value: reference }],
       attachments: [{ '@odata.type': '#microsoft.graph.fileAttachment', name: 'aol-copy-check.txt', contentType: 'text/plain', contentBytes: btoa(`MMH AOL copy attachment check\nReference: ${reference}\nNo customer information is included.\n`) }],
     });
+  }
+
+  // The single approved recipient is private deployment configuration, never RPC input.
+  #recipient(): string {
+    const recipient = this.env.AOL_COPY_ALERT_RECIPIENT;
+    if (!recipient || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) throw new Error('alert_recipient_missing');
+    return recipient;
   }
 
   // ECMAScript private method: never exposed as a callable RPC method.

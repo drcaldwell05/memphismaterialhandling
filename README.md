@@ -67,6 +67,14 @@ Cloudflare Vite plugin generates the deployable Worker configuration during the
 build. `.openai/hosting.json` remains a reference to the separate private draft;
 the public site is deployed by Cloudflare from GitHub.
 
+## Private AOL-copy notices
+
+`MailBridgeAlerts` is a private service entrypoint used by the separate cloud AOL copier and its five-minute status monitor. Failure and credential-renewal notices use only the single approved operator configured in the encrypted `AOL_COPY_ALERT_RECIPIENT` runtime setting. Keep this address out of the repository. Callers cannot supply a recipient or arbitrary email content; an absent recipient fails closed. Normal project-request recipients are independent of this setting.
+
+Keep `AOL_COPY_ALERTS_ENABLED=true` and both `AOL_COPY_TEST_ENABLED` and `AOL_MONITOR_TEST_ENABLED` false during normal operation. The separate monitor stays quiet while healthy. Its one-time synthetic test has a persisted attempt reservation; never re-enable or retry it merely because provider acceptance or Inbox receipt is uncertain.
+
+Both Microsoft application credentials currently expire March 26, 2027. The monitor gives advance renewal notices; it cannot rotate credentials. After an authorized renewal, update the monitor's configured expiration and the sender's validated renewal date together. Preserve the runtime recipient setting and existing encrypted sender credential during future deployments.
+
 ## Included Shape
 
 - edit site code under `app/`
