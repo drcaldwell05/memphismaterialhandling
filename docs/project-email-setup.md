@@ -1,5 +1,19 @@
 # Project request email setup
 
+## Routing update — October 14, 2026
+
+Normal website requests address Duane, Russell, and Operations. Failure,
+recovery, credential-renewal, and notice-verification emails address only
+Operations. The notice sender rejects any other configured recipient. The
+former AOL acceptance-test sender is permanently retired.
+
+The copier retries transient failures quietly. Its separate monitor alerts
+after 15 minutes of continuous unhealthy observations, sends one accepted
+notice per incident, and confirms recovery after two healthy checks. Delivery
+errors and pending messages are checked even when the successful-check
+timestamp is recent. Live deployment and delivery evidence for this update is
+kept in the task's `outputs/email-routing-2026-10-14` folder.
+
 ## Verified release — September 27, 2026
 
 Production sending is enabled. The approved test was delivered only to Russell
@@ -19,7 +33,7 @@ the Worker's encrypted runtime secret before then; never commit its value.
 ## Intended delivery
 
 - Sender: Memphis Material Handling `<projects@memphismaterialhandling.com>`
-- To: `russell@memphismaterialhandling.com`, `duane@memphismaterialhandling.com`
+- To: `duane@memphismaterialhandling.com`, `russell@memphismaterialhandling.com`, `operations@memphismaterialhandling.com`
 - Reply-To: the customer's email, when provided
 - No additional mailbox license or separately mapped Inbox for recipients.
 - External domain MX is a separate mail transition; do not change it for this form.
@@ -78,14 +92,14 @@ configuration. No customer email contents are retained in their storage.
 3. Publish through GitHub main → existing Cloudflare Workers Builds, initially
    leaving sending disabled.
 4. Obtain specific approval for any new live test's recipients and content. The
-   current form always addresses both Russell and Duane. Its original acceptance
+   current form always addresses Duane, Russell, and Operations. Its original acceptance
    test went only to Russell through a temporary path that has since been removed;
    do not reuse old test links or mistake a local mock for a delivered email.
 5. Check Microsoft message trace and the approved destination Inbox; Graph 202
    alone does not prove delivery. Confirm the sender, subject, HTML appearance,
    and customer Reply-To. Phone-only handling is verified in local tests.
 6. Enable `PROJECT_REQUESTS_ENABLED` through GitHub after delivery is verified.
-   Normal requests address Russell **and** Duane. Duane's live receipt was not
+   Normal requests address Duane, Russell, and Operations. Duane's live receipt was not
    claimed from the original Russell-only acceptance test.
 7. Declare setup complete only after delivery is verified. If a live test fails,
    disable sending while investigating. Never replace an actual failure with a

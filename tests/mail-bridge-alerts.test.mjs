@@ -10,7 +10,7 @@ const { outputFiles } = await build({
   } }],
 });
 const { MailBridgeAlerts } = await import(`data:text/javascript;base64,${Buffer.from(outputFiles[0].text).toString('base64')}`);
-const env = { AOL_COPY_ALERTS_ENABLED:'true', AOL_COPY_ALERT_RECIPIENT:'operator@example.com', MICROSOFT_TENANT_ID:'synthetic-tenant', MICROSOFT_CLIENT_ID:'synthetic-client', MS_GRAPH_CLIENT_SECRET:'synthetic-secret' };
+const env = { AOL_COPY_ALERTS_ENABLED:'true', AOL_COPY_ALERT_RECIPIENT:'operations@memphismaterialhandling.com', MICROSOFT_TENANT_ID:'synthetic-tenant', MICROSOFT_CLIENT_ID:'synthetic-client', MS_GRAPH_CLIENT_SECRET:'synthetic-secret' };
 
 test('private failure notices always target the approved private recipient and reject arbitrary recipients', async t => {
   const calls=[];
@@ -22,14 +22,16 @@ test('private failure notices always target the approved private recipient and r
   assert.equal(calls.length,2);
   assert.equal(calls[1].url,'https://graph.microsoft.com/v1.0/users/projects@memphismaterialhandling.com/sendMail');
   const email=JSON.parse(calls[1].options.body);
-  assert.deepEqual(email.message.toRecipients,[{emailAddress:{address:'operator@example.com'}}]);
+  assert.deepEqual(email.message.toRecipients,[{emailAddress:{address:'operations@memphismaterialhandling.com'}}]);
   assert.doesNotMatch(email.message.body.content,/private content|duane/);
   assert.match(email.message.body.content,/Messages currently waiting: 3/);
 });
 
 test('the approved recipient must be configured privately before a notice can send', async t => {
   let calls=0;t.mock.method(globalThis,'fetch',async()=>{calls++;throw Error('unexpected');});
-  await assert.rejects(new MailBridgeAlerts({},{...env,AOL_COPY_ALERT_RECIPIENT:undefined}).notify({pending:1,code:'failure'}),/alert_recipient_missing/);
+  for (const address of [undefined,'drcaldwell.05@gmail.com','memphismaterial@aol.com','russell@memphismaterialhandling.com']) {
+    await assert.rejects(new MailBridgeAlerts({},{...env,AOL_COPY_ALERT_RECIPIENT:address}).notify({pending:1,code:'failure'}),/alert_recipient_invalid/);
+  }
   assert.equal(calls,0);
 });
 
@@ -42,14 +44,16 @@ test('maintenance notices use only the private recipient and reject unapproved c
   const sender=new MailBridgeAlerts({},env);
   await sender.notifyMaintenance({reason:'copy_checks_missing',to:'unapproved@example.com',body:'private text'});
   const {message}=JSON.parse(calls[1].options.body);
-  assert.deepEqual(message.toRecipients,[{emailAddress:{address:'operator@example.com'}}]);
+  assert.deepEqual(message.toRecipients,[{emailAddress:{address:'operations@memphismaterialhandling.com'}}]);
+  assert.equal(message.ccRecipients,undefined);
+  assert.equal(message.bccRecipients,undefined);
   assert.doesNotMatch(JSON.stringify(message),/unapproved|private text/);
   await assert.rejects(sender.notifyMaintenance({reason:'arbitrary_message'}),/invalid_notice/);
   await assert.rejects(sender.notifyMaintenance({reason:'credential_renewal_due',expiry:'invalid'}),/invalid_expiration/);
   assert.equal(calls.length,2);
 });
 
-test('the monitor test is separately gated, uses the private recipient, and is signed by Dylan', async t => {
+test('the monitor test is separately gated and only targets Operations', async t => {
   const calls=[];
   t.mock.method(globalThis,'fetch',async(url,options)=>{
     calls.push({url,options});
@@ -59,9 +63,9 @@ test('the monitor test is separately gated, uses the private recipient, and is s
   assert.equal(calls.length,0);
   await new MailBridgeAlerts({},{...env,AOL_MONITOR_TEST_ENABLED:'true'}).sendMonitorTest();
   const {message}=JSON.parse(calls[1].options.body);
-  assert.deepEqual(message.toRecipients,[{emailAddress:{address:'operator@example.com'}}]);
+  assert.deepEqual(message.toRecipients,[{emailAddress:{address:'operations@memphismaterialhandling.com'}}]);
   assert.match(message.subject,/TEST/);
-  assert.match(message.body.content,/— Dylan/);
+  assert.match(message.body.content,/not a reported outage/);
 });
 
 test('disabled or malformed requests never contact Microsoft',async t=>{
@@ -76,19 +80,24 @@ test('Microsoft rejection is never reported as accepted',async t=>{
   await assert.rejects(new MailBridgeAlerts({},env).notify({pending:2,code:'failure'}),/delivery_unconfirmed/);
 });
 
-test('the separately gated setup email has a fixed AOL recipient and synthetic attachment', async t=>{
+test('the retired AOL test can never send even if its former gate is enabled', async t=>{
+  let calls=0;t.mock.method(globalThis,'fetch',async()=>{calls++;throw Error('unexpected send');});
+  await assert.rejects(new MailBridgeAlerts({},env).sendAcceptanceTest(),/test_retired/);
+  await assert.rejects(new MailBridgeAlerts({},{...env,AOL_COPY_TEST_ENABLED:'true'}).sendAcceptanceTest(),/test_retired/);
+  assert.equal(calls,0);
+  assert.equal(typeof new MailBridgeAlerts({},env).deliver,'undefined');
+});
+
+test('recovery notices confirm recovery and use Operations only', async t=>{
   const calls=[];
   t.mock.method(globalThis,'fetch',async (url,options)=>{
     calls.push({url,options});
     return url.includes('/token') ? Response.json({access_token:'synthetic-token'}) : new Response(null,{status:202});
   });
-  await assert.rejects(new MailBridgeAlerts({},env).sendAcceptanceTest(),/test_disabled/);
-  assert.equal(calls.length,0);
-  await new MailBridgeAlerts({},{...env,AOL_COPY_TEST_ENABLED:'true'}).sendAcceptanceTest();
+  await new MailBridgeAlerts({},env).notifyMaintenance({reason:'copy_recovered'});
   const {message}=JSON.parse(calls[1].options.body);
-  assert.deepEqual(message.toRecipients,[{emailAddress:{address:'memphismaterial@aol.com'}}]);
-  assert.equal(message.subject,'TEST — AOL copy check');
-  assert.equal(message.attachments[0].name,'aol-copy-check.txt');
-  assert.match(Buffer.from(message.attachments[0].contentBytes,'base64').toString(),/No customer information/);
-  assert.equal(typeof new MailBridgeAlerts({},env).deliver,'undefined');
+  assert.match(message.subject,/has recovered/);
+  assert.deepEqual(message.toRecipients,[{emailAddress:{address:'operations@memphismaterialhandling.com'}}]);
+  assert.equal(message.ccRecipients,undefined);
+  assert.equal(message.bccRecipients,undefined);
 });

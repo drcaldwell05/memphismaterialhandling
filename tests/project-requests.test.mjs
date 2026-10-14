@@ -109,14 +109,14 @@ test("Microsoft rejection never produces a success message", async t => {
   assert.equal((await response.json()).accepted, undefined);
 });
 
-test("retired test links fail closed while normal requests always use both approved recipients", async () => {
+test("retired test links fail closed while normal requests always use the three approved recipients", async () => {
   const configUrl = "https://memphismaterialhandling.com/api/project-requests/config";
   assert.deepEqual(await (await handleProjectRequest(new Request(configUrl), env)).json(), { enabled: true, siteKey: env.TURNSTILE_SITE_KEY });
   assert.deepEqual(await (await handleProjectRequest(new Request(configUrl + "?test=" + requestId), env)).json(), { enabled: false });
   const original = post();
   assert.equal((await handleProjectRequest(new Request(original.url + "?test=" + requestId, original), env)).status, 503);
   const message = projectEmail({ ...sample, delivery: "russell-test", to: "attacker@example.com" }, requestId).message;
-  assert.deepEqual(message.toRecipients.map(item => item.emailAddress.address), ["russell@memphismaterialhandling.com", "duane@memphismaterialhandling.com"]);
+  assert.deepEqual(message.toRecipients.map(item => item.emailAddress.address), ["duane@memphismaterialhandling.com", "russell@memphismaterialhandling.com", "operations@memphismaterialhandling.com"]);
   assert.equal(message.ccRecipients, undefined);
   assert.equal(message.bccRecipients, undefined);
   assert.doesNotMatch(message.body.content, /Dylan|website setup test|no action needed/i);
