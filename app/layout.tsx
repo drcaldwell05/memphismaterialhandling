@@ -45,7 +45,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <script type="module" src="/mmh-opening-start.js" />
+      </body>
     </html>
   );
 }
