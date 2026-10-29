@@ -47,7 +47,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
-        <script type="module" src="/mmh-opening-start.js" />
+        <script type="module" src="/mmh-opening-start.js" defer />
       </body>
     </html>
   );

@@ -1,0 +1,49 @@
+/* A cinematic closing chapter, from Memphis to the working warehouse. */
+.scroll-home{--cp-header:var(--journey-header)}
+.home-horizon{--story-length:220svh;--cp-bg:#0b2e25;--cp-ink:#f6f5f0;--cp-muted:#b7cbb5;--cp-accent:#d9b38c;background:#0b2e25}
+.home-horizon.is-pinned{min-height:1500px}
+.home-horizon .cp-sticky{background:#0b2e25}
+.home-horizon.is-pinned .horizon-visual{inset:0}
+.home-horizon .cp-topline{z-index:7;color:#ccd5c7;letter-spacing:.08em}
+.home-horizon .cp-copy{z-index:6;color:#f6f5f0}
+.home-horizon.is-pinned .cp-panel{width:52%;max-width:740px}
+.home-horizon .cp-title{font-size:clamp(57px,6.8vw,102px);line-height:1.04;letter-spacing:-.07em;font-weight:450}
+.home-horizon .cp-title>span{color:#e0bc96}
+.home-horizon .cp-description{max-width:330px;font-size:14px;line-height:1.9;margin-top:27px;color:#c6d5bf}
+.horizon-visual{height:520px;background:#0b2e25;overflow:hidden}
+.horizon-city{overflow:hidden}
+.horizon-city>img{height:100%;width:100%;object-fit:cover;object-position:63% 48%;filter:saturate(.75);transform:scale(calc(1.07 + var(--scene-progress,0)*.1)) translateX(calc(var(--scene-progress,0)*-1%));will-change:transform}
+.horizon-city-shade{position:absolute;inset:0;background:linear-gradient(90deg,#08281ff0,#08281f9c 43%,#08281f12 85%),linear-gradient(0deg,#0b2e25 0%,transparent 45%)}
+.horizon-established{position:absolute;top:25%;right:6%;display:flex;flex-direction:column;align-items:flex-end;color:#e4d3b8;transform:translateY(calc(var(--scene-progress,0)*-35px));opacity:.78}
+.horizon-established>span{font-size:10px;letter-spacing:.16em;text-transform:uppercase;line-height:1.8}
+.horizon-established>strong{font-size:clamp(115px,17vw,250px);font-weight:300;line-height:1.12;letter-spacing:-.07em;margin:7px 0 10px}
+.horizon-work{overflow:hidden;background:#0b2e25}
+.horizon-work-image{position:absolute;inset:0;overflow:hidden;clip-path:inset(calc(12% - var(--scene-progress,0)*12%) calc(6% - var(--scene-progress,0)*6%) calc(12% - var(--scene-progress,0)*12%) calc(48% - var(--scene-progress,0)*48%) round calc(20px - var(--scene-progress,0)*20px));will-change:clip-path}
+.horizon-work-image>img{width:100%;height:100%;object-fit:cover;object-position:70% 40%;filter:saturate(.72);transform:scale(calc(1.24 - var(--scene-progress,0)*.18));will-change:transform}
+.horizon-work-shade{position:absolute;inset:0;background:linear-gradient(90deg,#0b2e25f5 0%,#0b2e25dd 28%,#0b2e2599 48%,#0b2e2512 90%),linear-gradient(0deg,#0b2e25 0%,transparent 45%)}
+.horizon-work-caption{position:absolute;right:6%;top:28%;display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-size:clamp(22px,2.8vw,42px);font-weight:450;line-height:1.2;letter-spacing:-.04em;color:#e5e6d8;opacity:.8}
+.horizon-company-link{display:inline-flex;align-items:center;gap:35px;font-size:11px;line-height:1.6;min-height:44px;margin-top:26px;color:#d2ddca}
+.horizon-company-link>span{color:#d8b48c;font-size:18px;transition:transform .3s}
+.horizon-company-link:hover>span{transform:translate(3px,-3px)}
+.horizon-project-link{display:flex;align-items:center;justify-content:space-between;gap:50px;max-width:325px;margin-top:29px;font-size:17px;letter-spacing:-.03em;color:#f6f5f0}
+.horizon-project-arrow{width:68px;height:68px;display:grid;place-items:center;border-radius:50%;font-size:31px;font-weight:300;background:#dbb28b;color:#163b2d;transition:transform .3s,background .3s;flex-shrink:0}
+.horizon-project-link:hover .horizon-project-arrow{transform:translate(3px,-3px);background:#efcda8}
+.horizon-experience-link{display:inline-flex;align-items:center;gap:35px;font-size:10px;line-height:1.8;min-height:35px;color:#b1c7ab;margin-top:17px}
+.horizon-experience-link>span{color:#d8b48c}
+.home-horizon .cp-progress{border:0;bottom:28px;gap:35px;padding:0}
+.home-horizon .cp-progress:after{display:none}
+.home-horizon .cp-progress button{color:#9eb599;gap:11px}
+.home-horizon .cp-progress button[aria-current=step]{color:#f6f5f0}
+.home-horizon .cp-progress button>span{display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#ffffff0d;color:#b5c8ac;font-size:8px}
+.home-horizon .cp-progress button[aria-current=step]>span{background:#d8b18b;color:#15392d}
+.home-horizon .cp-progress-hint{color:#9eb599}
+.scroll-home .site-footer{background:#0b2e25}
+/* A useful natural layout remains when motion is off or the viewport is short. */
+.home-horizon:not(.is-pinned) .cp-copy{padding:44px 0 55px;gap:65px}
+.home-horizon:not(.is-pinned) .cp-title{font-size:clamp(42px,4.7vw,70px)}
+.home-horizon:not(.is-pinned) .cp-panel{max-width:none}
+@media(max-width:1100px){.home-horizon .cp-title{font-size:7.1vw}.home-horizon.is-pinned .cp-panel{width:57%}.horizon-established{right:5%}.horizon-work-caption{font-size:30px;right:5%}.horizon-project-link{max-width:290px;font-size:16px}.horizon-project-arrow{width:60px;height:60px}}
+@media(max-width:900px){.home-horizon.is-pinned .cp-panel{width:60%}.home-horizon .cp-title{font-size:7.5vw}.home-horizon .cp-description{font-size:13px;max-width:300px}.horizon-established>strong{font-size:20vw}.horizon-work-caption{font-size:25px}.horizon-project-link{max-width:270px}.horizon-established>span{font-size:8px}.home-horizon .cp-topline{font-size:8px}}
+@media(max-width:700px){.home-horizon{--story-length:225svh}.home-horizon.is-pinned{min-height:1550px}.home-horizon .cp-title{font-size:clamp(42px,11vw,65px);line-height:1.06}.home-horizon.is-pinned .cp-panel{width:100%;max-width:100%;bottom:106px}.home-horizon .cp-description{font-size:12px;line-height:1.85;max-width:310px;margin-top:21px}.home-horizon .cp-topline{font-size:7px;letter-spacing:.04em}.home-horizon .cp-topline>span:last-child{max-width:135px}.horizon-city>img{object-position:57% 40%}.horizon-city-shade{background:linear-gradient(0deg,#0b2e25 5%,#0b2e25e0 35%,#0b2e2570 68%,#0b2e2550),linear-gradient(90deg,#0b2e2570,transparent)}.horizon-established{top:14%;right:23px;opacity:.62}.horizon-established>strong{font-size:31vw;line-height:1.05;margin:7px 0}.horizon-established>span{font-size:7px;letter-spacing:.12em}.horizon-work-image{clip-path:inset(calc(10% - var(--scene-progress,0)*10%) calc(5% - var(--scene-progress,0)*5%) calc(35% - var(--scene-progress,0)*35%) calc(5% - var(--scene-progress,0)*5%) round calc(16px - var(--scene-progress,0)*16px))}.horizon-work-image>img{object-position:63% 35%}.horizon-work-shade{background:linear-gradient(0deg,#0b2e25 3%,#0b2e25e8 30%,#0b2e2590 55%,#0b2e252b 85%),linear-gradient(90deg,#0b2e2550,transparent)}.horizon-work-caption{top:15%;right:23px;font-size:21px;opacity:.8}.horizon-company-link{font-size:10px;margin-top:18px;gap:25px}.horizon-project-link{max-width:286px;font-size:15px;margin-top:23px}.horizon-project-arrow{width:54px;height:54px;font-size:27px}.horizon-experience-link{font-size:9px;margin-top:14px;gap:25px}.home-horizon .cp-progress{bottom:24px;gap:28px;justify-content:flex-start}.home-horizon .cp-progress button{display:flex;align-items:center;gap:10px;font-size:10px;min-height:44px;padding:8px 0}.home-horizon .cp-progress button>span{margin:0}.home-horizon .cp-progress-hint{display:none}.horizon-visual{height:360px}.home-horizon:not(.is-pinned) .cp-copy{padding:35px 0 45px;gap:45px}.home-horizon:not(.is-pinned) .cp-title{font-size:41px}.home-horizon:not(.is-pinned) .cp-panel{width:100%}}
+@media(max-width:370px){.home-horizon .cp-title{font-size:37px}.home-horizon .cp-description{font-size:11px;max-width:275px}.horizon-project-link{font-size:14px;max-width:260px;margin-top:20px}.horizon-project-arrow{width:49px;height:49px;font-size:25px}.horizon-experience-link{font-size:8px}.horizon-work-caption{font-size:18px}.horizon-company-link{font-size:9px}.home-horizon .cp-overline{font-size:7px}}
+@media(prefers-reduced-motion:reduce){.home-horizon .cp-visual{height:360px}.horizon-city>img,.horizon-established,.horizon-work-image>img{transform:none!important}.horizon-work-image{clip-path:none}.home-horizon .cp-panel{width:100%;max-width:100%}.horizon-project-arrow{transition:none}}

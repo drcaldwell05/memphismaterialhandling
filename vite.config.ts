@@ -1,6 +1,7 @@
 import vinext from "vinext";
 import { defineConfig } from "vite";
 import hostingConfig from "./.openai/hosting.json";
+import { renderSite } from "./build/render-site.mjs";
 import { sites } from "./build/sites-vite-plugin";
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
@@ -13,6 +14,10 @@ const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 
 const localBindingConfig = {
   main: "./worker/index.ts",
+  assets: {
+    html_handling: "none" as const,
+    run_worker_first: ["/", "/index.html", "/services", "/services/", "/services.html", "/partners", "/partners/", "/partners.html", "/about", "/about/", "/about.html", "/contact", "/contact/", "/contact.html", "/plan-project", "/plan-project/", "/plan-project.html", "/api/*", "/_site-pages", "/_site-pages/*"],
+  },
   d1_databases: d1
     ? [
         {
@@ -33,6 +38,7 @@ const localBindingConfig = {
 };
 
 export default defineConfig(async () => {
+  await renderSite();
   // Keep Wrangler and Miniflare state project-local. These are non-secret tool
   // settings; application environment belongs in ignored `.env*` files.
   process.env.WRANGLER_WRITE_LOGS ??= "false";

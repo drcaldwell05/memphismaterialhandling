@@ -12,6 +12,7 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     ".wrangler/**",
+    "public/assets/three.module.js", // Vendored Three.js; its license is preserved.
     "next-env.d.ts",
     "worker-configuration.d.ts",
   ]),

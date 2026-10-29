@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#12392e">
+  <meta name="robots" content="noindex,nofollow"><meta name="description" content="Tell Memphis Material Handling about your warehouse project. A few simple questions about your space, equipment, and how to reach you.">
+  <title>Plan a Project — Memphis Material Handling</title>
+  <link rel="icon" href="assets/logo.png"><link rel="preload" href="assets/manrope.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="page-motion.css"><link rel="stylesheet" href="plan-project.css">
+</head>
+<body class="custom-page project-plan-page" data-active="plan">
+  <div data-site-header></div>
+  <main id="main-content">
+    <section class="pp-opening" aria-labelledby="project-title">
+      <div class="wrap pp-opening-layout"><div><p class="pp-eyebrow">Your space. Your next chapter.</p><h1 id="project-title">Let’s make<br><span>your next move.</span></h1><p class="pp-opening-lead">A few details are all it takes to start.<br>Tell us what you need. We’ll take it from there.</p><a class="pp-opening-link" href="#your-project">Start with your project <span aria-hidden="true">↓</span></a></div><figure class="pp-opening-photo"><img src="assets/warehouse.webp" alt="Warehouse racking installation in progress" width="4096" height="4096" fetchpriority="high"><div></div><figcaption>From a clear plan.<br>To a working floor.</figcaption></figure></div>
+      <div class="wrap pp-opening-baseline"><span>Plan · Equip · Install</span><span>No complete plan needed. Just a starting point.</span></div>
+    </section>
+
+    <div class="wrap pp-layout" id="project-questionnaire">
+      <aside class="pp-guide" aria-label="Project questionnaire progress">
+        <p class="pp-eyebrow">A clear starting point</p><h2>A little context.<br><span>A next step.</span></h2><p class="pp-guide-intro">Only the essentials.<br>Everything else can come later.</p>
+        <nav class="pp-progress" aria-label="Questionnaire sections"><a href="#your-project" data-pp-step="0" aria-current="step"><span class="pp-step-mark">01</span><span>Your project<small>What do you have in mind?</small></span><i aria-hidden="true">↗</i></a><a href="#project-basics" data-pp-step="1"><span class="pp-step-mark">02</span><span>A little context<small>Where and when?</small></span><i aria-hidden="true">↗</i></a><a href="#your-details" data-pp-step="2"><span class="pp-step-mark">03</span><span>Your details<small>How can we reach you?</small></span><i aria-hidden="true">↗</i></a></nav>
+        <p class="pp-guide-call">Prefer a conversation?<br><a href="tel:9019477225">901-947-7225 <span aria-hidden="true">↗</span></a></p>
+      </aside>
+
+      <form class="pp-form" id="project-form" method="post" action="/api/project-requests" novalidate>
+        <noscript><div class="pp-message">Please enable JavaScript to send a project request, or call <a href="tel:9019477225">901-947-7225</a> to talk with us.</div></noscript>
+        <div class="pp-honeypot" aria-hidden="true"><label for="project-website">Leave this field empty</label><input id="project-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+        <section class="pp-section" id="your-project" data-pp-section aria-labelledby="project-needs-title">
+          <div class="pp-section-heading"><p class="pp-eyebrow">01 / Your project</p><h2 id="project-needs-title" tabindex="-1">What can we<br><span>help you with?</span></h2><p>Choose any that fit. “I’m not sure” is a good start, too.</p></div>
+          <fieldset class="pp-needs" aria-describedby="project-needs-help project-needs-error"><legend class="pp-sr-only">What do you need help with?</legend><p class="pp-sr-only" id="project-needs-help">Select one or more options. Selecting I’m not sure clears the other options.</p>
+            <label class="pp-choice"><input type="checkbox" name="needs" value="storage"><span class="pp-choice-copy"><strong>More storage.</strong><small>Make room for what you keep.</small></span><span class="pp-choice-mark" aria-hidden="true">+</span></label>
+            <label class="pp-choice"><input type="checkbox" name="needs" value="location"><span class="pp-choice-copy"><strong>A new space.</strong><small>Set up, expand, or relocate.</small></span><span class="pp-choice-mark" aria-hidden="true">+</span></label>
+            <label class="pp-choice"><input type="checkbox" name="needs" value="flow"><span class="pp-choice-copy"><strong>Better movement.</strong><small>Improve the flow of products.</small></span><span class="pp-choice-mark" aria-hidden="true">+</span></label>
+            <label class="pp-choice"><input type="checkbox" name="needs" value="equipment"><span class="pp-choice-copy"><strong>The right equipment.</strong><small>Explore new or used options.</small></span><span class="pp-choice-mark" aria-hidden="true">+</span></label>
+            <label class="pp-choice"><input type="checkbox" name="needs" value="installation"><span class="pp-choice-copy"><strong>Installation.</strong><small>Install or rearrange equipment.</small></span><span class="pp-choice-mark" aria-hidden="true">+</span></label>
+            <label class="pp-choice"><input type="checkbox" name="needs" value="clearout"><span class="pp-choice-copy"><strong>Equipment to clear.</strong><small>Sell surplus or clear a facility.</small></span><span class="pp-choice-mark" aria-hidden="true">+</span></label>
+            <label class="pp-choice pp-choice-unsure"><input type="checkbox" name="needs" value="unsure"><span class="pp-choice-copy"><strong>I’m not sure yet.</strong><small>Let’s figure out a starting point.</small></span><span class="pp-choice-mark" aria-hidden="true">+</span></label>
+          </fieldset>
+          <p class="pp-field-error" id="project-needs-error" role="status"></p>
+          <div class="pp-section-action"><span>Choose one or more.</span><button type="button" class="pp-next" data-pp-next="1">A little context <span aria-hidden="true">↓</span></button></div>
+        </section>
+
+        <section class="pp-section" id="project-basics" data-pp-section aria-labelledby="project-basics-title">
+          <div class="pp-section-heading"><p class="pp-eyebrow">02 / A little context</p><h2 id="project-basics-title" tabindex="-1">Tell us a little<br><span>about the space.</span></h2><p>A short description helps. Skip anything you don’t know yet.</p></div>
+          <div class="pp-field"><label for="project-description">What are you working on? <span>Optional</span></label><textarea id="project-description" name="description" rows="4" maxlength="3000" placeholder="What’s changing, what you need, or what you’d like help figuring out." aria-describedby="project-description-error"></textarea><p class="pp-field-error" id="project-description-error"></p></div>
+          <div class="pp-fields-two"><div class="pp-field"><label for="project-location">Project location <span>Optional</span></label><input id="project-location" name="location" type="text" maxlength="180" autocomplete="address-level2" placeholder="City and state" aria-describedby="project-location-error"><p class="pp-field-error" id="project-location-error"></p></div><div class="pp-field"><label for="project-timing">When are you thinking?</label><select id="project-timing" name="timing" aria-describedby="project-timing-error"><option>Not sure yet</option><option>As soon as possible</option><option>Within 1–3 months</option><option>Within 3–6 months</option><option>More than 6 months from now</option><option>Just exploring options</option></select><p class="pp-field-error" id="project-timing-error"></p></div></div>
+          <div class="pp-section-action"><span>Not sure? That’s fine.</span><button type="button" class="pp-next" data-pp-next="2">Your details <span aria-hidden="true">↓</span></button></div>
+        </section>
+
+        <section class="pp-section" id="your-details" data-pp-section aria-labelledby="project-details-title">
+          <div class="pp-section-heading"><p class="pp-eyebrow">03 / Your details</p><h2 id="project-details-title" tabindex="-1">Let’s keep<br><span>in touch.</span></h2><p>Your name and one way to reach you. That’s all we need.</p></div>
+          <div class="pp-fields-two"><div class="pp-field"><label for="project-name">Your name <span>Required</span></label><input id="project-name" name="name" type="text" maxlength="120" autocomplete="name" required aria-describedby="project-name-error"><p class="pp-field-error" id="project-name-error"></p></div><div class="pp-field"><label for="project-company">Company <span>Optional</span></label><input id="project-company" name="company" type="text" maxlength="180" autocomplete="organization" aria-describedby="project-company-error"><p class="pp-field-error" id="project-company-error"></p></div></div>
+          <p class="pp-contact-help" id="project-contact-help">Add an email address, a phone number, or both.</p>
+          <div class="pp-fields-two"><div class="pp-field"><label for="project-email">Email address</label><input id="project-email" name="email" type="email" maxlength="254" autocomplete="email" inputmode="email" aria-describedby="project-contact-help project-email-error"><p class="pp-field-error" id="project-email-error"></p></div><div class="pp-field"><label for="project-phone">Phone number</label><input id="project-phone" name="phone" type="tel" maxlength="40" autocomplete="tel" inputmode="tel" aria-describedby="project-contact-help project-phone-error"><p class="pp-field-error" id="project-phone-error"></p></div></div>
+          <div class="pp-submit-area"><p>Your details will be used to follow up about this project.</p><button type="submit" class="pp-review-button" disabled><span>Review your project</span><span aria-hidden="true">↗</span></button><p class="pp-connection-note" data-pp-connection role="status">Connecting to project requests…</p></div>
+        </section>
+      </form>
+
+      <section class="pp-success" id="project-success" hidden aria-labelledby="project-success-title" tabindex="-1"><span class="pp-success-mark" aria-hidden="true">✓</span><p class="pp-eyebrow">The next chapter starts here.</p><h2 id="project-success-title">Your project.<br><span>On our radar.</span></h2><p>Thanks for telling us what you have in mind. Our team will review your request and reach out using the details you provided.</p><p class="pp-success-reference" data-pp-reference hidden></p><div class="pp-success-actions"><a href="services.html">Explore our capabilities <span aria-hidden="true">↗</span></a><a href="tel:9019477225">Need to talk? 901-947-7225</a></div></section>
+    </div>
+  </main>
+  <dialog class="pp-review-dialog" id="project-review" aria-labelledby="project-review-title"><div class="pp-review-top"><p class="pp-eyebrow">One last look.</p><button type="button" class="pp-review-close" data-pp-close aria-label="Close project review">×</button></div><h2 id="project-review-title" tabindex="-1">Ready for<br><span>the next step?</span></h2><p class="pp-review-intro">Check the details below. You can change anything before sending.</p><div class="pp-review-content" data-pp-summary></div><p class="pp-send-error" data-pp-send-error role="alert" hidden></p><div class="pp-verification" aria-label="Submission verification"><div data-pp-verification></div><p data-pp-verification-status role="status">A quick verification before sending.</p><button type="button" data-pp-verify-retry hidden>Try verification again</button></div><p class="pp-review-privacy">We’ll use your details to follow up about this project.</p><div class="pp-review-actions"><button type="button" class="pp-review-back" data-pp-close>Keep editing</button><button type="button" class="pp-send-button" data-pp-send disabled><span>Send project request</span><span aria-hidden="true">↗</span></button></div><button type="button" class="pp-retry-connection" data-pp-reconnect hidden>Try connecting again</button><p class="pp-review-call">Prefer to talk? <a href="tel:9019477225">901-947-7225</a></p></dialog>
+  <div data-site-footer></div><script type="module" src="app.js"></script><script type="module" src="plan-project.js"></script>
+</body>
+</html>
