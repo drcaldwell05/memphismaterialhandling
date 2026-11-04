@@ -12,6 +12,14 @@ export const PUBLIC_PAGES = [
   { file:'plan-project.html', route:'/plan-project', active:'plan' },
 ];
 const ORIGIN = 'https://www.memphismaterialhandling.com';
+const GOOGLE_TAG = `<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-QFHBQGR78J"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-QFHBQGR78J');
+</script>`;
 const routeByFile = new Map(PUBLIC_PAGES.map(page=>[page.file,page.route]));
 const escapeAttribute = value => value.replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 const decodeText = value => value.replaceAll('&amp;','&').replaceAll('&quot;','"').replaceAll('&#39;',"'");
@@ -56,7 +64,7 @@ export async function renderSite(root=process.cwd()) {
     const description=decodeText(html.match(/<meta\s+name="description"\s+content="([^"]*)"/i)?.[1]||'Warehouse planning, equipment, and installation from Memphis Material Handling.');
     const canonical=ORIGIN+page.route;
     const metadata=`<meta name="robots" content="index,follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:site_name" content="Memphis Material Handling"><meta property="og:title" content="${escapeAttribute(title)}"><meta property="og:description" content="${escapeAttribute(description)}"><meta property="og:url" content="${canonical}"><meta property="og:image" content="${ORIGIN}/og-redesign.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Memphis Material Handling — warehouse planning, equipment, and installation"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${escapeAttribute(title)}"><meta name="twitter:description" content="${escapeAttribute(description)}"><meta name="twitter:image" content="${ORIGIN}/og-redesign.png">`;
-    html=html.replace('</head>',metadata+'\n</head>');
+    html=html.replace('</head>',metadata+'\n'+GOOGLE_TAG+'\n</head>');
     if(page.route==='/'){
       const business={ '@context':'https://schema.org', '@type':'LocalBusiness', name:'Memphis Material Handling, Inc.', url:ORIGIN, telephone:'+1-901-947-7225', foundingDate:'1986', image:ORIGIN+'/og-redesign.png', address:{'@type':'PostalAddress',streetAddress:'3832 Watman Ave.',addressLocality:'Memphis',addressRegion:'TN',postalCode:'38118',addressCountry:'US'}, openingHoursSpecification:[{'@type':'OpeningHoursSpecification',dayOfWeek:['Monday','Tuesday','Wednesday','Thursday','Friday'],opens:'08:00',closes:'17:00'}] };
       html=html.replace('</head>',`<script type="application/ld+json">${JSON.stringify(business).replaceAll('<','\\u003c')}</script>\n</head>`);
