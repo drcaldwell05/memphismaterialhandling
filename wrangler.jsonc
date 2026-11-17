@@ -16,6 +16,11 @@
   "durable_objects": {
     "bindings": [{ "name": "PROJECT_SUBMISSIONS", "class_name": "ProjectSubmission" }]
   },
+  "d1_databases": [{
+    "binding": "PROJECT_REQUESTS_DB",
+    "database_name": "mmh-project-requests",
+    "database_id": "f770b3aa-4ea6-4e4d-b120-cfa978a4bfd7"
+  }],
   "migrations": [{ "tag": "project-submission-v1", "new_sqlite_classes": ["ProjectSubmission"] }],
   "ratelimits": [{ "name": "PROJECT_RATE_LIMITER", "namespace_id": "2026092701", "simple": { "limit": 5, "period": 60 } }],
   "assets": {
