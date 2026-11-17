@@ -316,7 +316,8 @@ sendButton.addEventListener('click',async () => {
     }
     if (result.verification === true) {
       submission=null;verificationToken='';
-      sendError.textContent='Please complete the verification again. Your answers are still here.';sendError.hidden=false;
+      sendError.textContent=typeof result.error === 'string' ? result.error : 'Please complete the verification again. Your answers are still here.';
+      sendError.hidden=false;
       await ensureVerification(true);
       return;
     }

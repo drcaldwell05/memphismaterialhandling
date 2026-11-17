@@ -1,5 +1,25 @@
 # Project request email setup
 
+## Saved requests
+
+Open **D1 SQLite Database → mmh-project-requests → Studio** in the Cloudflare
+dashboard and choose `project_requests`. The table contains the contact details,
+project answers, and email status for each new verified request. Access requires
+permission to the Cloudflare account and database. The website has no public
+route for reading saved requests.
+
+The Worker saves the request before contacting Microsoft. To review requests
+that may need manual follow-up, filter `email_status` to `failed`, `uncertain`,
+or `pending`. `accepted` means Microsoft accepted the notification for sending.
+All saved requests are available in the same table. Each row uses the same
+reference as the form confirmation and notification.
+
+Apply `migrations/0001_project_requests.sql` to the database before deploying
+the Worker binding on a new environment. The read-only
+`/api/project-requests/config` endpoint checks that the table is reachable.
+Backup records stay in the database until removed by an authorized operator.
+Local tests use an in-memory database and simulated Microsoft responses.
+
 ## Routing update — October 14, 2026
 
 Normal website requests address Duane, Russell, and Operations. Failure,

@@ -3,22 +3,18 @@ import { PROJECT_SENDER, projectEmail } from "./project-email";
 
 const HOSTS = new Set(["memphismaterialhandling.com", "www.memphismaterialhandling.com"]);
 const MAX_BYTES = 24_000;
-const RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export type MailEnv = Env & { MS_GRAPH_CLIENT_SECRET?: string; TURNSTILE_SECRET_KEY?: string };
-type Receipt = { fingerprint: string; state: "pending" | "accepted" | "uncertain" | "failed"; started: number };
+type LegacyReceipt = { fingerprint: string; state: "pending" | "accepted" | "uncertain" | "failed"; started: number };
+type EmailOutcome = { status: "accepted" | "failed" | "uncertain"; error: string | null };
 
 export function json(body: unknown, status = 200) {
   return Response.json(body, { status, headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
 }
 
-function configured(env: MailEnv) {
-  return GUID.test(env.MICROSOFT_TENANT_ID) && GUID.test(env.MICROSOFT_CLIENT_ID) && Boolean(env.MS_GRAPH_CLIENT_SECRET && env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY && env.PROJECT_SUBMISSIONS && env.PROJECT_RATE_LIMITER);
-}
-
 export function ready(env: MailEnv) {
-  return env.PROJECT_REQUESTS_ENABLED === "true" && configured(env);
+  return env.PROJECT_REQUESTS_ENABLED === "true" && Boolean(env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY && env.PROJECT_REQUESTS_DB && env.PROJECT_SUBMISSIONS && env.PROJECT_RATE_LIMITER);
 }
 
 async function readBody(request: Request) {
@@ -45,8 +41,12 @@ async function readBody(request: Request) {
 export async function handleProjectRequest(request: Request, env: MailEnv) {
   const url = new URL(request.url);
   // Retired acceptance-test links must never submit to the normal recipient list.
-  const enabled = !url.searchParams.has("test") && ready(env);
+  let enabled = !url.searchParams.has("test") && ready(env);
   if (url.pathname === "/api/project-requests/config" && request.method === "GET") {
+    if (enabled) {
+      try { await env.PROJECT_REQUESTS_DB.prepare("SELECT 1 FROM project_requests LIMIT 0").run(); }
+      catch { console.error("project_request_storage_health_failed"); enabled = false; }
+    }
     return json({ enabled, siteKey: enabled ? env.TURNSTILE_SITE_KEY : undefined });
   }
   if (request.method !== "POST") return json({ error: "Method not allowed." }, 405);
@@ -77,8 +77,16 @@ export class ProjectSubmission {
   async fetch(request: Request): Promise<Response> {
     const { data, requestId, token, hostname, ip } = await request.json() as { data: ProjectRequest; requestId: string; token: string; hostname: string; ip: string };
     const fingerprint = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(data))))).map(byte => byte.toString(16).padStart(2, "0")).join("");
-    const old = await this.ctx.storage.get<Receipt>("receipt");
-    if (old) return this.receiptResponse(old, fingerprint, requestId);
+    // Keep retries for requests handled before the database rollout duplicate-safe.
+    const legacy = await this.ctx.storage.get<LegacyReceipt>("receipt");
+    if (legacy) return this.legacyResponse(legacy, fingerprint, requestId);
+
+    const db = this.env.PROJECT_REQUESTS_DB;
+    const lookup = db.prepare("SELECT fingerprint FROM project_requests WHERE reference = ?").bind(requestId);
+    try {
+      const existing = await lookup.first<string>("fingerprint");
+      if (existing !== null) return savedResponse(existing, fingerprint, requestId);
+    } catch { return this.storageUnavailable(requestId); }
 
     let verification: { success?: boolean; hostname?: string; action?: string };
     try {
@@ -92,26 +100,54 @@ export class ProjectSubmission {
     } catch { return json({ error: "Verification is temporarily unavailable. Please try again.", verification: true }, 503); }
     if (!verification.success || verification.hostname !== hostname || verification.action !== "project_request") return json({ error: "Please complete the verification again.", verification: true }, 400);
 
+    try {
+      // Saving the row also reserves the only email attempt for this reference.
+      const insert = await db.prepare(`
+        INSERT INTO project_requests (reference, fingerprint, name, company, email, phone, needs, description, location, timing)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (reference) DO NOTHING
+      `).bind(requestId, fingerprint, data.name, data.company, data.email, data.phone, JSON.stringify(data.needs), data.description, data.location, data.timing).run();
+      if (!insert.meta.changes) {
+        const existing = await lookup.first<string>("fingerprint");
+        return existing === null ? this.storageUnavailable(requestId) : savedResponse(existing, fingerprint, requestId);
+      }
+    } catch { return this.storageUnavailable(requestId); }
+
+    const outcome = await this.sendEmail(data, requestId);
+    try {
+      await db.prepare(`
+        UPDATE project_requests SET email_status = ?, email_error = ?, email_status_at = ? WHERE reference = ?
+      `).bind(outcome.status, outcome.error, new Date().toISOString(), requestId).run();
+    } catch {
+      // The request is already saved. Pending still flags it for staff review.
+      console.error("project_request_email_status_update_failed", { reference: requestId, outcome: outcome.status });
+    }
+    return json({ accepted: true, reference: requestId });
+  }
+
+  private storageUnavailable(reference: string) {
+    console.error("project_request_storage_unavailable", { reference });
+    return json({ error: "We couldn’t confirm your request was saved. Your answers are still here. Please try again or call 901-947-7225.", verification: true }, 503);
+  }
+
+  private async sendEmail(data: ProjectRequest, requestId: string): Promise<EmailOutcome> {
+    if (!GUID.test(this.env.MICROSOFT_TENANT_ID) || !GUID.test(this.env.MICROSOFT_CLIENT_ID) || !this.env.MS_GRAPH_CLIENT_SECRET) {
+      console.error("project_request_email_not_configured", { reference: requestId });
+      return { status: "failed", error: "mail_not_configured" };
+    }
     let accessToken: string;
     try {
       const response = await fetch(`https://login.microsoftonline.com/${this.env.MICROSOFT_TENANT_ID}/oauth2/v2.0/token`, {
         method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ client_id: this.env.MICROSOFT_CLIENT_ID, client_secret: this.env.MS_GRAPH_CLIENT_SECRET!, scope: "https://graph.microsoft.com/.default", grant_type: "client_credentials" }),
+        body: new URLSearchParams({ client_id: this.env.MICROSOFT_CLIENT_ID, client_secret: this.env.MS_GRAPH_CLIENT_SECRET, scope: "https://graph.microsoft.com/.default", grant_type: "client_credentials" }),
         signal: AbortSignal.timeout(8_000),
       });
       const body = await response.json() as { access_token?: string };
       if (!response.ok || !body.access_token) throw new Error("authorization-unavailable");
       accessToken = body.access_token;
-    } catch { console.error("project_request_authorization_failed"); return json({ error: "We couldn’t submit your request. Your answers are still here. Please try again or call 901-947-7225.", verification: true }, 503); }
-
-    // Reserve before sending. Concurrent requests and browser retries can never send twice.
-    const existing = await this.ctx.storage.transaction(async transaction => {
-      const receipt = await transaction.get<Receipt>("receipt");
-      if (receipt) return receipt;
-      await transaction.put("receipt", { fingerprint, state: "pending", started: Date.now() } satisfies Receipt);
-      await transaction.setAlarm(Date.now() + RETENTION_MS);
-    });
-    if (existing) return this.receiptResponse(existing, fingerprint, requestId);
+    } catch {
+      console.error("project_request_authorization_failed", { reference: requestId });
+      return { status: "failed", error: "microsoft_authorization" };
+    }
 
     let result: Response;
     try {
@@ -120,17 +156,15 @@ export class ProjectSubmission {
         body: JSON.stringify(projectEmail(data, requestId)), signal: AbortSignal.timeout(12_000),
       });
     } catch {
-      await this.ctx.storage.put("receipt", { fingerprint, state: "uncertain", started: Date.now() } satisfies Receipt);
       console.error("project_request_delivery_uncertain", { reference: requestId });
-      return this.receiptResponse({ fingerprint, state: "uncertain", started: Date.now() }, fingerprint, requestId);
+      return { status: "uncertain", error: "send_result_unknown" };
     }
-    const state = result.status === 202 ? "accepted" : "failed";
-    await this.ctx.storage.put("receipt", { fingerprint, state, started: Date.now() } satisfies Receipt);
-    if (state === "failed") console.error("project_request_delivery_rejected", { reference: requestId, status: result.status });
-    return this.receiptResponse({ fingerprint, state, started: Date.now() }, fingerprint, requestId);
+    if (result.status === 202) return { status: "accepted", error: null };
+    console.error("project_request_delivery_rejected", { reference: requestId, status: result.status });
+    return { status: "failed", error: `microsoft_http_${result.status}` };
   }
 
-  private receiptResponse(receipt: Receipt, fingerprint: string, reference: string) {
+  private legacyResponse(receipt: LegacyReceipt, fingerprint: string, reference: string) {
     if (receipt.fingerprint !== fingerprint) return json({ error: "This request has already been submitted. Please reopen the form to start another request.", final: true }, 409);
     if (receipt.state === "accepted") return json({ accepted: true, reference });
     if (receipt.state === "pending" && Date.now() - receipt.started < 60_000) return json({ pending: true, error: "Your request is still being submitted. Wait a moment, then check again." }, 409);
@@ -139,4 +173,9 @@ export class ProjectSubmission {
   }
 
   async alarm() { await this.ctx.storage.deleteAll(); }
+}
+
+function savedResponse(storedFingerprint: string, fingerprint: string, reference: string) {
+  if (storedFingerprint !== fingerprint) return json({ error: "This request has already been submitted. Please reopen the form to start another request.", final: true }, 409);
+  return json({ accepted: true, reference });
 }

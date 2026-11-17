@@ -61,6 +61,20 @@ await test('mobile/reduced-motion review remains usable and no private-draft con
 await test('server field errors unlock the fields and focus the corrected control',async()=>{
  const f=await setup({post:route=>route.fulfill({status:400,json:{errors:{name:'Please check your name.'}}})});await fill(f.page);await complete(f.page);await f.page.locator('[data-pp-send]').click();await f.page.locator('#project-review[open]').waitFor({state:'hidden'});assert.equal(await f.page.locator('#project-name').isEnabled(),true);await f.page.waitForFunction(()=>document.activeElement?.id==='project-name');assert.match(await f.page.locator('#project-name-error').innerText(),/Please check your name/);await f.context.close();
 });
+await test('a storage outage explains that saving was unconfirmed and keeps the answers',async()=>{
+  const f = await setup({post:route=>route.fulfill({status:503,json:{verification:true,error:'We couldn’t confirm your request was saved.'}})});
+  await fill(f.page);
+  await complete(f.page);
+  await f.page.locator('[data-pp-send]').click();
+  const notice = f.page.locator('[data-pp-send-error]:not([hidden])');
+  await notice.waitFor();
+  assert.match(await notice.innerText(),/couldn’t confirm your request was saved/);
+  assert.equal(await f.page.locator('#project-success').isVisible(),false);
+  await f.page.getByRole('button',{name:'Keep editing'}).click();
+  assert.equal(await f.page.locator('#project-name').inputValue(),'UI Test');
+  assert.equal(await f.page.locator('#project-phone').inputValue(),'9015550142');
+  await f.context.close();
+});
 await test('disabled delivery prevents sending and preserves the entered details',async()=>{
  const f=await setup({enabled:false});await fill(f.page);assert.equal(await f.page.locator('[data-pp-send]').isDisabled(),true);assert.equal(f.scripts(),0);assert.match(await f.page.locator('[data-pp-send-error]').innerText(),/unavailable/);assert.equal(f.payloads.length,0);await f.context.close();
 });

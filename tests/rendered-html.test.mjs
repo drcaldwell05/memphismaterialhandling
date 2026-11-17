@@ -115,6 +115,7 @@ test('uses explicit asset handling and preserves existing protected delivery bin
   for(const page of PUBLIC_PAGES){assert.ok(config.assets.run_worker_first.includes(page.route));assert.ok(config.assets.run_worker_first.includes(page.route==='/'?'/index.html':page.route+'.html'));}
   assert.ok(config.assets.run_worker_first.includes('/_site-pages/*'));assert.ok(config.assets.run_worker_first.includes('/api/*'));
   assert.equal(config.vars.PROJECT_REQUESTS_ENABLED,'true');assert.equal(config.vars.AOL_COPY_ALERTS_ENABLED,'true');assert.equal(config.durable_objects.bindings[0].class_name,'ProjectSubmission');assert.equal(config.migrations[0].tag,'project-submission-v1');assert.equal(config.ratelimits[0].name,'PROJECT_RATE_LIMITER');
+  assert.equal(config.d1_databases.find(binding=>binding.binding==='PROJECT_REQUESTS_DB')?.database_name,'mmh-project-requests');
   assert.ok(!('MS_GRAPH_CLIENT_SECRET' in config.vars));assert.ok(!('TURNSTILE_SECRET_KEY' in config.vars));
 });
 

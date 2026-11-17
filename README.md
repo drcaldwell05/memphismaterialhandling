@@ -8,29 +8,28 @@ needs, enter their details, and review their request without leaving the page.
 Staff sign-in is not linked in public navigation while access is unfinished.
 The separate Contact page retains its phone number, directions, and opening hours.
 
-The form posts to `/api/project-requests`. Microsoft Graph sends the HTML
-notification from `projects@memphismaterialhandling.com` directly to Russell and
-Duane's regular Microsoft inboxes. Reply-To is the customer when they provide an
-email address; phone-only requests remain supported. The sender and recipients
-are fixed on the server. The shared sender mailbox is not mapped into their apps.
+The form posts to `/api/project-requests`. The Worker saves each verified
+request in the private `mmh-project-requests` Cloudflare D1 database before
+asking Microsoft Graph to email Russell, Duane, and Operations. Reply-To is the
+customer when they provide an email address. Phone-only requests remain
+supported. The sender and recipients are fixed on the server.
 
 Production sending was enabled on September 27, 2026, after the approved test
 arrived in Russell's Inbox and Microsoft message trace reported Delivered. The
-test went only to Russell; normal requests address both Russell and Duane.
-`PROJECT_REQUESTS_ENABLED` must be `true` and all required bindings/credentials
-must be present. Temporary test controls and fixture data have been removed. See
-[the setup checklist](docs/project-email-setup.md).
+test went only to Russell. The October 14 routing update verified delivery to
+all three inboxes. Intake requires `PROJECT_REQUESTS_ENABLED=true`, a working
+database, and the verification settings. Missing Microsoft credentials affect
+the notification only. See [the setup checklist](docs/project-email-setup.md).
 
 Requests use server validation, a 24 KB body cap, same-origin checks, a honeypot,
 five attempts per IP per minute, and server-verified Turnstile tokens bound to the
-site hostname and form action. A SQLite Durable Object keeps only the submission
-fingerprint, reference, timestamp, and status for seven days to prevent duplicate
-sends. Customer contact details and message text are not saved in that store or
-logged. Microsoft keeps the sent email in the shared sender's Sent Items.
+site hostname and form action. The database stores the verified request details
+and uses the project reference to prevent duplicate sends. Customer details go
+in the private database and the notification. Worker logs contain no form answers.
 
-Microsoft's HTTP 202 means accepted for sending, not confirmed inbox delivery.
-The form says submitted only after that acceptance. An uncertain send is never
-automatically resent, and a failed send keeps the customer's answers visible.
+The form confirms a request after it is saved. The database records whether
+Microsoft accepted the email or whether delivery failed or remains unconfirmed.
+Use the `project_requests` table in Cloudflare D1 Studio to find saved requests.
 The email layout is editable in `worker/project-email.ts`.
 
 ## Application
