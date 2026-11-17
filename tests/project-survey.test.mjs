@@ -1,23 +1,32 @@
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
 import path from 'node:path';
-import http from 'node:http';
 import test from 'node:test';
 // Browser QA is opt-in: install Playwright or set MMH_PLAYWRIGHT_MODULE to its module path.
 const {chromium}=await import(process.env.MMH_PLAYWRIGHT_MODULE || 'playwright');
 
 const root=process.cwd();
-const server=http.createServer(async(req,res)=>{
-  const pathname=new URL(req.url,'http://localhost').pathname;
-  const name=pathname==='/plan-project'?path.join(root,'site-pages/plan-project.html'):path.join(root,'public',pathname.replace(/^\//,''));
-  try{const body=await readFile(name);res.setHeader('content-type',name.endsWith('.html')?'text/html':name.endsWith('.js')?'text/javascript':name.endsWith('.css')?'text/css':'application/octet-stream');res.end(body);}catch{res.statusCode=404;res.end('Not found');}
-});
-await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-const origin='http://127.0.0.1:'+server.address().port;
+const origin='https://project-form.test';
 const browser=await chromium.launch({...(process.env.MMH_BROWSER_EXECUTABLE?{executablePath:process.env.MMH_BROWSER_EXECUTABLE}:{}),headless:true});
 const mockTurnstile=`window.testVerification={renders:[],removed:[],complete(value='mock-token'){this.renders.at(-1).callback(value)},expire(){this.renders.at(-1)['expired-callback']()},error(){this.renders.at(-1)['error-callback']()}};window.turnstile={render(container,options){window.testVerification.renders.push(options);const fixture=document.createElement('div');fixture.textContent='Mock verification';fixture.style.cssText=options.size==='compact'?'height:140px;width:150px':'height:65px;min-width:300px;width:100%';container.append(fixture);return 'mock-'+window.testVerification.renders.length},remove(id){window.testVerification.removed.push(id);document.querySelector('[data-pp-verification]').replaceChildren()}};`;
-async function setup({enabled=true,scriptFails=false,post}={}){
-  const context=await browser.newContext({viewport:{width:1440,height:1000}});await context.addInitScript(()=>sessionStorage.setItem('mmh-opening-seen-v2','1'));
+async function offlineContext(options={}) {
+  const context = await browser.newContext({ serviceWorkers:'block', ...options });
+  await context.route('**/*', async route => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const fixture = url.origin === origin && request.method() === 'GET' && !url.pathname.startsWith('/api/');
+    if (!fixture) return route.abort();
+    const file = url.pathname === '/plan-project' ? 'site-pages/plan-project.html' : 'public'+url.pathname;
+    try {
+      return await route.fulfill({ path:path.join(root,file) });
+    } catch {
+      return route.fulfill({ status:404, body:'Not found' });
+    }
+  });
+  return context;
+}
+async function setup({enabled=true,scriptFails=false,withoutTimeout=false,post}={}){
+  const context=await offlineContext({viewport:{width:1440,height:1000}});await context.addInitScript(()=>sessionStorage.setItem('mmh-opening-seen-v2','1'));
+  if (withoutTimeout) await context.addInitScript(()=>Object.defineProperty(AbortSignal,'timeout',{value:undefined}));
   const page=await context.newPage();const payloads=[];let scriptRequests=0;const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.route('**/api/project-requests/config',route=>route.fulfill({json:{enabled,siteKey:enabled?'mock-site-key':undefined}}));
   await page.route('https://challenges.cloudflare.com/**',route=>{scriptRequests++;return scriptFails&&scriptRequests===1?route.abort():route.fulfill({contentType:'application/javascript',body:mockTurnstile})});
@@ -52,8 +61,33 @@ await test('mobile/reduced-motion review remains usable and no private-draft con
 await test('server field errors unlock the fields and focus the corrected control',async()=>{
  const f=await setup({post:route=>route.fulfill({status:400,json:{errors:{name:'Please check your name.'}}})});await fill(f.page);await complete(f.page);await f.page.locator('[data-pp-send]').click();await f.page.locator('#project-review[open]').waitFor({state:'hidden'});assert.equal(await f.page.locator('#project-name').isEnabled(),true);await f.page.waitForFunction(()=>document.activeElement?.id==='project-name');assert.match(await f.page.locator('#project-name-error').innerText(),/Please check your name/);await f.context.close();
 });
-await test('disabled delivery and no-JS defaults cannot submit or place contact data in a URL',async()=>{
+await test('disabled delivery prevents sending and preserves the entered details',async()=>{
  const f=await setup({enabled:false});await fill(f.page);assert.equal(await f.page.locator('[data-pp-send]').isDisabled(),true);assert.equal(f.scripts(),0);assert.match(await f.page.locator('[data-pp-send-error]').innerText(),/unavailable/);assert.equal(f.payloads.length,0);await f.context.close();
- const context=await browser.newContext({javaScriptEnabled:false});const page=await context.newPage();await page.goto(origin+'/plan-project');assert.equal(await page.locator('#project-form').getAttribute('method'),'post');assert.equal(await page.locator('.pp-review-button').isDisabled(),true);assert.equal(await page.locator('noscript').isVisible(),true);await context.close();
 });
-} finally {await browser.close();await new Promise(resolve=>server.close(resolve));}
+await test('keeps the phone fallback visible when JavaScript is disabled or the form script fails to load',async()=>{
+  for (const javaScriptEnabled of [false,true]) {
+    const context = await offlineContext({ javaScriptEnabled, viewport:{width:390,height:844} });
+    const page = await context.newPage();
+    if (javaScriptEnabled) await page.route(url=>url.pathname==='/plan-project.js',route=>route.abort());
+    await page.goto(origin+'/plan-project');
+    assert.equal(await page.locator('#project-form').isVisible(),false);
+    assert.equal(await page.locator('.pp-review-button').isDisabled(),true);
+    assert.equal(await page.locator('.pp-progress').isVisible(),false);
+    const phone = page.getByRole('link',{name:'901-947-7225',exact:true}).and(page.locator('[data-pp-form-fallback] a'));
+    assert.equal(await phone.isVisible(),true);
+    assert.equal(await phone.getAttribute('href'),'tel:9019477225');
+    await context.close();
+  }
+});
+await test('reviews and sends through the mocked endpoint without AbortSignal.timeout',async()=>{
+  const f = await setup({withoutTimeout:true});
+  await fill(f.page);
+  await complete(f.page);
+  assert.equal(await f.page.locator('[data-pp-form-fallback]').isVisible(),false);
+  await f.page.locator('[data-pp-send]').click();
+  await f.page.locator('#project-success:not([hidden])').waitFor();
+  assert.equal(f.payloads.length,1);
+  assert.deepEqual(f.errors,[]);
+  await f.context.close();
+});
+} finally {await browser.close();}

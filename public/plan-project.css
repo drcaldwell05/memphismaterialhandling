@@ -89,6 +89,7 @@ html:has(.project-plan-page){scroll-padding-top:0}
 .pp-connection-note:empty{display:none}
 .pp-honeypot,.pp-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .pp-message{font-size:13px;line-height:1.8;padding:19px;background:#eceee4;border-left:2px solid #b67953;margin-bottom:25px}
+.pp-message a{font-weight:600;text-decoration:underline;text-underline-offset:3px}
 .pp-success{background:#12392e;color:#f6f5f0;padding:48px 44px;min-width:0}
 .pp-success-mark{display:grid;place-items:center;width:56px;height:56px;background:#d6b18b;color:#163c2d;border-radius:50%;font-size:27px;margin-bottom:29px}
 .pp-success .pp-eyebrow{color:#d1b18d}
