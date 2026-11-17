@@ -84,7 +84,9 @@ test('serves a native, accessible project questionnaire with a review and safe n
   assert.match(html,/<form\b[^>]*method="post"[^>]*action="\/api\/project-requests"/);
   for(const name of ['needs','description','location','timing','name','company','email','phone','website'])assert.ok(html.includes(`name="${name}"`));
   for(const id of ['your-project','project-basics','your-details'])assert.ok(html.includes(`id="${id}"`));
-  assert.match(html,/<dialog\b[^>]*id="project-review"/);assert.match(html,/Review your project/);assert.match(html,/Send project request/);assert.match(html,/<noscript>/);
+  assert.match(html,/<dialog\b[^>]*id="project-review"/);assert.match(html,/Review your project/);assert.match(html,/Send project request/);
+  assert.match(html,/<form\b[^>]*\bhidden\b[^>]*\binert\b/);
+  assert.match(html,/<p\b[^>]*data-pp-form-fallback[^>]*>[^<]*<a href="tel:9019477225">/);
   assert.match(html,/<button\b[^>]*class="pp-review-button"[^>]*disabled/);
   assert.match(html,/type="email"/);assert.match(html,/type="tel"/);assert.match(html,/autocomplete="name"/);
   assert.doesNotMatch(html,/project-inbox|private draft|Email alerts aren’t enabled|Your email was sent/i);

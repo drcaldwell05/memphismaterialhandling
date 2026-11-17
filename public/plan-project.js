@@ -3,6 +3,8 @@ const form = document.getElementById('project-form');
 const dialog = document.getElementById('project-review');
 const sections = [...document.querySelectorAll('[data-pp-section]')];
 const steps = [...document.querySelectorAll('[data-pp-step]')];
+const progress = document.querySelector('.pp-progress');
+const formFallback = document.querySelector('[data-pp-form-fallback]');
 const needsInputs = [...form.querySelectorAll('input[name="needs"]')];
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 const fields = ['description','location','timing','name','company','email','phone'];
@@ -222,14 +224,24 @@ async function ensureVerification(renew=false) {
     });
   } catch { verificationProblem('Verification did not load. Try again, or call 901-947-7225.'); }
 }
+async function fetchProjectJSON(path, options, timeout) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(path, { ...options, signal:controller.signal });
+    const result = await response.json().catch(() => null) ?? {};
+    return { response, result };
+  } finally {
+    clearTimeout(timer);
+  }
+}
 async function loadConfig() {
   config={enabled:false};updateSendState();reconnectButton.hidden=true;
   connection.textContent='Connecting to project requests…';
   try {
-    const response=await fetch('/api/project-requests/config',{cache:'no-store',credentials:'same-origin',signal:AbortSignal.timeout(12000)});
-    const result=response.ok?await response.json():{};
-    const siteKey=typeof result.siteKey==='string'&&result.siteKey.length<200?result.siteKey:'';
-    config={enabled:result.enabled===true&&Boolean(siteKey),siteKey};
+    const { response, result } = await fetchProjectJSON('/api/project-requests/config', { cache:'no-store', credentials:'same-origin' }, 12000);
+    const siteKey = typeof result.siteKey === 'string' && result.siteKey.length < 200 ? result.siteKey : '';
+    config = { enabled:response.ok && result.enabled === true && Boolean(siteKey), siteKey };
   } catch { config={enabled:false}; }
   if (config.enabled) {
     connection.textContent='';
@@ -273,9 +285,10 @@ sendButton.addEventListener('click',async () => {
   sendError.hidden = true;sendError.textContent='';delete sendError.dataset.connection;
   setSending(true);
   try {
-    const response = await fetch('/api/project-requests',{ method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' }, credentials:'same-origin', body:JSON.stringify(payload), signal:AbortSignal.timeout(45000) });
-    let result;
-    try { result = await response.json(); } catch { result = {}; }
+    const { response, result } = await fetchProjectJSON('/api/project-requests', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' },
+      credentials:'same-origin', body:JSON.stringify(payload),
+    }, 45000);
     if (response.ok && result.accepted === true) {
       accepted = true;
       dialog.close();
@@ -283,7 +296,7 @@ sendButton.addEventListener('click',async () => {
       const success = document.getElementById('project-success');success.hidden = false;
       if (typeof result.reference === 'string' && result.reference.length < 200) { const reference=document.querySelector('[data-pp-reference]');reference.textContent=`Project reference: ${result.reference}`;reference.hidden=false; }
       steps.forEach(link => { link.classList.add('is-complete');link.querySelector('.pp-step-mark').textContent='✓';link.removeAttribute('aria-current'); });
-      document.querySelector('.pp-progress').hidden=true;
+      progress.hidden=true;
       document.querySelector('.pp-guide h2').replaceChildren(document.createTextNode('Thanks for the details.'));
       document.querySelector('.pp-guide-intro').textContent='A clear starting point. A next step together.';
       success.scrollIntoView({ block:'start', behavior:reduced.matches ? 'instant' : 'smooth' });success.focus({ preventScroll:true });
@@ -320,6 +333,12 @@ addEventListener('pageshow',requestPaint);
 reduced.addEventListener('change',setMotion);
 document.fonts?.ready.then(requestPaint);
 if ('ResizeObserver' in window) new ResizeObserver(requestPaint).observe(document.querySelector('main'));
-setMotion();
-form.querySelector('.pp-review-button').disabled=false;
-void loadConfig();
+if (typeof dialog.showModal === 'function') {
+  form.removeAttribute('inert');
+  form.hidden = false;
+  formFallback.hidden = true;
+  progress.hidden = false;
+  form.querySelector('.pp-review-button').disabled = false;
+  setMotion();
+  void loadConfig();
+}
